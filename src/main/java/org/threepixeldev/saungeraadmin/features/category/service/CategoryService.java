@@ -34,7 +34,7 @@ public class CategoryService {
     @Cacheable(value = CACHE_NAME, key = CACHE_KEY_ALL, unless = "#result.isEmpty()")
     @Transactional(readOnly = true)
     public List<CategoryResponse> getAllCategories() {
-        return categoryRepository.findAll().stream()
+        return categoryRepository.findAllNotDeleted().stream()
                 .map(categoryMapper::toResponse)
                 .collect(Collectors.toList());
     }
@@ -42,17 +42,19 @@ public class CategoryService {
     @Cacheable(value = CACHE_NAME, key = CACHE_KEY_BY_ID, unless = "#result == null")
     @Transactional(readOnly = true)
     public CategoryResponse getCategoryById(Long id) {
-        Category category = categoryRepository.findById(id)
+        Category category = categoryRepository.findByIdNotDeleted(id)
                 .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
         return categoryMapper.toResponse(category);
     }
 
     @CacheEvict(value = CACHE_NAME, allEntries = true)
     public CategoryResponse createCategory(CategoryRequest request, Long createdBy) {
-        // Check if category name already exists
-        if (categoryRepository.findByName(request.getName()).isPresent()) {
-            throw new RuntimeException("Category with name '" + request.getName() + "' already exists");
-        }
+        categoryRepository.findByName(request.getName())
+                .ifPresent(existingCategory -> {
+                    if (existingCategory.getDeletedAt() == null) {
+                        throw new RuntimeException("Category with name '" + request.getName() + "' already exists");
+                    }
+                });
 
         Category category = categoryMapper.toEntity(request);
         category.setCreatedBy(createdBy);
@@ -64,13 +66,12 @@ public class CategoryService {
 
     @CacheEvict(value = CACHE_NAME, allEntries = true)
     public CategoryResponse updateCategory(Long id, CategoryRequest request, Long updatedBy) {
-        Category category = categoryRepository.findById(id)
+        Category category = categoryRepository.findByIdNotDeleted(id)
                 .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
 
-        // Check if new name already exists (excluding current category)
         categoryRepository.findByName(request.getName())
                 .ifPresent(existingCategory -> {
-                    if (!existingCategory.getId().equals(id)) {
+                    if (!existingCategory.getId().equals(id) && existingCategory.getDeletedAt() == null) {
                         throw new RuntimeException("Category with name '" + request.getName() + "' already exists");
                     }
                 });
@@ -85,7 +86,7 @@ public class CategoryService {
 
     @CacheEvict(value = CACHE_NAME, allEntries = true)
     public void deleteCategory(Long id, Long deletedBy) {
-        Category category = categoryRepository.findById(id)
+        Category category = categoryRepository.findByIdNotDeleted(id)
                 .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
         
         category.delete(deletedBy);

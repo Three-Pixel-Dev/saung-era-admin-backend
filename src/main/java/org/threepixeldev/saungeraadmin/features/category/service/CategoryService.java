@@ -49,12 +49,9 @@ public class CategoryService {
 
     @CacheEvict(value = CACHE_NAME, allEntries = true)
     public CategoryResponse createCategory(CategoryRequest request, Long createdBy) {
-        categoryRepository.findByName(request.getName())
-                .ifPresent(existingCategory -> {
-                    if (existingCategory.getDeletedAt() == null) {
-                        throw new RuntimeException("Category with name '" + request.getName() + "' already exists");
-                    }
-                });
+        if (categoryRepository.findByNameNotDeleted(request.getName()).isPresent()) {
+            throw new RuntimeException("Category with name '" + request.getName() + "' already exists");
+        }
 
         Category category = categoryMapper.toEntity(request);
         category.setCreatedBy(createdBy);
@@ -69,9 +66,9 @@ public class CategoryService {
         Category category = categoryRepository.findByIdNotDeleted(id)
                 .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
 
-        categoryRepository.findByName(request.getName())
+        categoryRepository.findByNameNotDeleted(request.getName())
                 .ifPresent(existingCategory -> {
-                    if (!existingCategory.getId().equals(id) && existingCategory.getDeletedAt() == null) {
+                    if (!existingCategory.getId().equals(id)) {
                         throw new RuntimeException("Category with name '" + request.getName() + "' already exists");
                     }
                 });
@@ -99,5 +96,22 @@ public class CategoryService {
             throw new RuntimeException("Category not found with id: " + id);
         }
         categoryRepository.deleteById(id);
+    }
+
+    @CacheEvict(value = CACHE_NAME, allEntries = true)
+    public CategoryResponse restoreCategory(Long id, Long restoredBy) {
+        Category category = categoryRepository.findByIdDeleted(id)
+                .orElseThrow(() -> new RuntimeException("Deleted category not found with id: " + id));
+
+        categoryRepository.findByNameNotDeleted(category.getName())
+                .ifPresent(existingCategory -> {
+                    throw new RuntimeException("Cannot restore category: A category with name '" + category.getName() + "' already exists");
+                });
+        
+        category.restore();
+        category.setUpdatedBy(restoredBy);
+        
+        Category restoredCategory = categoryRepository.save(category);
+        return categoryMapper.toResponse(restoredCategory);
     }
 }

@@ -70,4 +70,14 @@ public class CategoryController {
         categoryService.hardDeleteCategory(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{id}/restore")
+    public ResponseEntity<CategoryResponse> restoreCategory(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId) {
+        // TODO: Get userId from authentication context instead of header
+        Long restoredBy = userId != null ? userId : 1L;
+        CategoryResponse category = categoryService.restoreCategory(id, restoredBy);
+        return ResponseEntity.ok(category);
+    }
 }

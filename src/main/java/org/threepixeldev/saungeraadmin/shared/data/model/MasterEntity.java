@@ -47,5 +47,10 @@ public abstract class MasterEntity {
         this.deletedAt = LocalDateTime.now();
         this.deletedBy = deletedBy;
     }
+
+    public void restore() {
+        this.deletedAt = null;
+        this.deletedBy = null;
+    }
 }
 

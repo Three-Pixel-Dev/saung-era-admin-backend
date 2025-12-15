@@ -1,12 +1,21 @@
 package org.threepixeldev.saungeraadmin.features.category.mapper;
 
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.threepixeldev.saungeraadmin.features.category.dto.CategoryRequest;
 import org.threepixeldev.saungeraadmin.features.category.dto.CategoryResponse;
 import org.threepixeldev.saungeraadmin.shared.data.model.Category;
+import org.threepixeldev.saungeraadmin.shared.data.model.User;
+import org.threepixeldev.saungeraadmin.shared.data.repository.jpa.UserJpaRepository;
+import org.threepixeldev.saungeraadmin.shared.mapper.UserMapper;
 
 @Component
+@AllArgsConstructor
 public class CategoryMapper {
+
+    private final UserJpaRepository userRepository;
+
+    private final UserMapper userMapper;
 
     public CategoryResponse toResponse(Category category) {
         if (category == null) {
@@ -19,8 +28,26 @@ public class CategoryMapper {
         response.setDescription(category.getDescription());
         response.setCreatedAt(category.getCreatedAt());
         response.setUpdatedAt(category.getUpdatedAt());
-        response.setCreatedBy(category.getCreatedBy());
-        response.setUpdatedBy(category.getUpdatedBy());
+        response.setDeletedAt(category.getDeletedAt());
+        
+        // Map createdBy
+        if (category.getCreatedBy() != null) {
+            User createdByUser = userRepository.findById(category.getCreatedBy()).orElse(null);
+            response.setCreatedBy(userMapper.toUserResponse(createdByUser));
+        }
+        
+        // Map updatedBy
+        if (category.getUpdatedBy() != null) {
+            User updatedByUser = userRepository.findById(category.getUpdatedBy()).orElse(null);
+            response.setUpdatedBy(userMapper.toUserResponse(updatedByUser));
+        }
+        
+        // Map deletedBy
+        if (category.getDeletedBy() != null) {
+            User deletedByUser = userRepository.findById(category.getDeletedBy()).orElse(null);
+            response.setDeletedBy(userMapper.toUserResponse(deletedByUser));
+        }
+        
         return response;
     }
 

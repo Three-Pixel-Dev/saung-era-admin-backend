@@ -5,16 +5,17 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.threepixeldev.saungeraadmin.features.category.constants.CategorySwaggerMessages;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Request DTO for creating or updating a category")
+@Schema(description = CategorySwaggerMessages.CATEGORY_REQUEST_DESCRIPTION)
 public class CategoryRequest {
-    @NotBlank(message = "Category name is required")
-    @Schema(description = "Category name", example = "Men's Clothing", maxLength = 255)
+    @NotBlank(message = "{validation.category.name.required}")
+    @Schema(description = CategorySwaggerMessages.CATEGORY_NAME_DESCRIPTION, example = "Men's Clothing", maxLength = 255)
     private String name;
 
-    @Schema(description = "Category description", example = "This category contains all men's clothing items", maxLength = 1000)
+    @Schema(description = CategorySwaggerMessages.CATEGORY_DESCRIPTION_DESCRIPTION, example = "This category contains all men's clothing items", maxLength = 1000)
     private String description;
 }

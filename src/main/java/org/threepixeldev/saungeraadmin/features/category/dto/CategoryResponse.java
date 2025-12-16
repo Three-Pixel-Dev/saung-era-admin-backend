@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import org.threepixeldev.saungeraadmin.features.category.constants.CategorySwaggerMessages;
 import org.threepixeldev.saungeraadmin.shared.dto.MasterData;
 
 @Data
@@ -13,14 +14,14 @@ import org.threepixeldev.saungeraadmin.shared.dto.MasterData;
 @AllArgsConstructor
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
-@Schema(description = "Response DTO containing category information")
+@Schema(description = CategorySwaggerMessages.CATEGORY_RESPONSE_DESCRIPTION)
 public class CategoryResponse extends MasterData {
-    @Schema(description = "Unique identifier of the category", example = "1")
+    @Schema(description = CategorySwaggerMessages.CATEGORY_ID_DESCRIPTION, example = "1")
     private Long id;
 
-    @Schema(description = "Category name", example = "Men's Clothing")
+    @Schema(description = CategorySwaggerMessages.CATEGORY_NAME_DESCRIPTION, example = "Men's Clothing")
     private String name;
 
-    @Schema(description = "Category description", example = "This category contains all men's clothing items")
+    @Schema(description = CategorySwaggerMessages.CATEGORY_DESCRIPTION_DESCRIPTION, example = "This category contains all men's clothing items")
     private String description;
 }

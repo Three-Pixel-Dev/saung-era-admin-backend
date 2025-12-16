@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.threepixeldev.saungeraadmin.features.category.constants.CategorySwaggerMessages;
 import org.threepixeldev.saungeraadmin.features.category.dto.CategoryRequest;
 import org.threepixeldev.saungeraadmin.features.category.dto.CategoryResponse;
 import org.threepixeldev.saungeraadmin.features.category.service.CategoryService;
@@ -20,8 +21,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/categories")
-@Tag(name = "Category Management", description = "APIs for managing product categories. " +
-        "Categories are cached in Redis with a 30-minute TTL for improved performance.")
+@Tag(name = CategorySwaggerMessages.TAG_NAME, description = CategorySwaggerMessages.TAG_DESCRIPTION)
 public class CategoryController {
 
     private final CategoryService categoryService;
@@ -32,15 +32,13 @@ public class CategoryController {
     }
 
     @Operation(
-            summary = "Get all categories",
-            description = "Retrieves a list of all active (non-deleted) categories. " +
-                    "Results are cached in Redis for 30 minutes to improve performance. " +
-                    "The cache is automatically invalidated when categories are created, updated, or deleted."
+            summary = CategorySwaggerMessages.GET_ALL_SUMMARY,
+            description = CategorySwaggerMessages.GET_ALL_DESCRIPTION
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Successfully retrieved list of categories",
+                    description = CategorySwaggerMessages.GET_ALL_SUCCESS,
                     content = @Content(schema = @Schema(implementation = CategoryResponse.class))
             )
     })
@@ -51,52 +49,48 @@ public class CategoryController {
     }
 
     @Operation(
-            summary = "Get category by ID",
-            description = "Retrieves a specific category by its unique identifier. " +
-                    "Only active (non-deleted) categories can be retrieved. " +
-                    "Results are cached in Redis for 30 minutes."
+            summary = CategorySwaggerMessages.GET_BY_ID_SUMMARY,
+            description = CategorySwaggerMessages.GET_BY_ID_DESCRIPTION
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Category found and returned successfully",
+                    description = CategorySwaggerMessages.GET_BY_ID_SUCCESS,
                     content = @Content(schema = @Schema(implementation = CategoryResponse.class))
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "Category not found or has been deleted"
+                    description = CategorySwaggerMessages.GET_BY_ID_NOT_FOUND
             )
     })
     @GetMapping("/{id}")
     public ResponseEntity<CategoryResponse> getCategoryById(
-            @Parameter(description = "Unique identifier of the category", example = "1", required = true)
+            @Parameter(description = CategorySwaggerMessages.GET_BY_ID_PARAM_ID, example = "1", required = true)
             @PathVariable Long id) {
         CategoryResponse category = categoryService.getCategoryById(id);
         return ResponseEntity.ok(category);
     }
 
     @Operation(
-            summary = "Create a new category",
-            description = "Creates a new product category. " +
-                    "The category name must be unique among active categories. " +
-                    "This operation automatically clears the category cache to ensure fresh data on next retrieval."
+            summary = CategorySwaggerMessages.CREATE_SUMMARY,
+            description = CategorySwaggerMessages.CREATE_DESCRIPTION
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "201",
-                    description = "Category created successfully",
+                    description = CategorySwaggerMessages.CREATE_SUCCESS,
                     content = @Content(schema = @Schema(implementation = CategoryResponse.class))
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Invalid request data or category name already exists"
+                    description = CategorySwaggerMessages.CREATE_BAD_REQUEST
             )
     })
     @PostMapping
     public ResponseEntity<CategoryResponse> createCategory(
-            @Parameter(description = "Category creation request", required = true)
+            @Parameter(description = CategorySwaggerMessages.CREATE_PARAM_REQUEST, required = true)
             @Valid @RequestBody CategoryRequest request,
-            @Parameter(description = "ID of the user creating the category (optional, defaults to 1)", example = "1")
+            @Parameter(description = CategorySwaggerMessages.CREATE_PARAM_USER_ID, example = "1")
             @RequestHeader(value = "X-User-Id", required = false) Long userId) {
         Long createdBy = userId != null ? userId : 1L;
         CategoryResponse category = categoryService.createCategory(request, createdBy);
@@ -104,33 +98,31 @@ public class CategoryController {
     }
 
     @Operation(
-            summary = "Update an existing category",
-            description = "Updates an existing active category. " +
-                    "The category name must be unique among active categories (excluding the current category). " +
-                    "This operation automatically clears the category cache."
+            summary = CategorySwaggerMessages.UPDATE_SUMMARY,
+            description = CategorySwaggerMessages.UPDATE_DESCRIPTION
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Category updated successfully",
+                    description = CategorySwaggerMessages.UPDATE_SUCCESS,
                     content = @Content(schema = @Schema(implementation = CategoryResponse.class))
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Invalid request data or category name already exists"
+                    description = CategorySwaggerMessages.UPDATE_BAD_REQUEST
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "Category not found or has been deleted"
+                    description = CategorySwaggerMessages.UPDATE_NOT_FOUND
             )
     })
     @PutMapping("/{id}")
     public ResponseEntity<CategoryResponse> updateCategory(
-            @Parameter(description = "Unique identifier of the category to update", example = "1", required = true)
+            @Parameter(description = CategorySwaggerMessages.UPDATE_PARAM_ID, example = "1", required = true)
             @PathVariable Long id,
-            @Parameter(description = "Category update request", required = true)
+            @Parameter(description = CategorySwaggerMessages.UPDATE_PARAM_REQUEST, required = true)
             @Valid @RequestBody CategoryRequest request,
-            @Parameter(description = "ID of the user updating the category (optional, defaults to 1)", example = "1")
+            @Parameter(description = CategorySwaggerMessages.UPDATE_PARAM_USER_ID, example = "1")
             @RequestHeader(value = "X-User-Id", required = false) Long userId) {
         Long updatedBy = userId != null ? userId : 1L;
         CategoryResponse category = categoryService.updateCategory(id, request, updatedBy);
@@ -138,26 +130,24 @@ public class CategoryController {
     }
 
     @Operation(
-            summary = "Soft delete a category",
-            description = "Performs a soft delete on a category by setting the deletedAt timestamp. " +
-                    "The category is not permanently removed from the database and can be restored later. " +
-                    "This operation automatically clears the category cache."
+            summary = CategorySwaggerMessages.DELETE_SUMMARY,
+            description = CategorySwaggerMessages.DELETE_DESCRIPTION
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "204",
-                    description = "Category soft deleted successfully"
+                    description = CategorySwaggerMessages.DELETE_SUCCESS
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "Category not found or already deleted"
+                    description = CategorySwaggerMessages.DELETE_NOT_FOUND
             )
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCategory(
-            @Parameter(description = "Unique identifier of the category to delete", example = "1", required = true)
+            @Parameter(description = CategorySwaggerMessages.DELETE_PARAM_ID, example = "1", required = true)
             @PathVariable Long id,
-            @Parameter(description = "ID of the user deleting the category (optional, defaults to 1)", example = "1")
+            @Parameter(description = CategorySwaggerMessages.DELETE_PARAM_USER_ID, example = "1")
             @RequestHeader(value = "X-User-Id", required = false) Long userId) {
         Long deletedBy = userId != null ? userId : 1L;
         categoryService.deleteCategory(id, deletedBy);
@@ -165,56 +155,51 @@ public class CategoryController {
     }
 
     @Operation(
-            summary = "Hard delete a category",
-            description = "Permanently deletes a category from the database. " +
-                    "This operation cannot be undone. Use soft delete if you want the option to restore the category later. " +
-                    "This operation automatically clears the category cache."
+            summary = CategorySwaggerMessages.HARD_DELETE_SUMMARY,
+            description = CategorySwaggerMessages.HARD_DELETE_DESCRIPTION
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "204",
-                    description = "Category permanently deleted successfully"
+                    description = CategorySwaggerMessages.HARD_DELETE_SUCCESS
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "Category not found"
+                    description = CategorySwaggerMessages.HARD_DELETE_NOT_FOUND
             )
     })
     @DeleteMapping("/{id}/hard")
     public ResponseEntity<Void> hardDeleteCategory(
-            @Parameter(description = "Unique identifier of the category to permanently delete", example = "1", required = true)
+            @Parameter(description = CategorySwaggerMessages.HARD_DELETE_PARAM_ID, example = "1", required = true)
             @PathVariable Long id) {
         categoryService.hardDeleteCategory(id);
         return ResponseEntity.noContent().build();
     }
 
     @Operation(
-            summary = "Restore a deleted category",
-            description = "Restores a soft-deleted category by clearing the deletedAt timestamp. " +
-                    "The category name must be unique among active categories. " +
-                    "If an active category with the same name exists, the restore operation will fail. " +
-                    "This operation automatically clears the category cache."
+            summary = CategorySwaggerMessages.RESTORE_SUMMARY,
+            description = CategorySwaggerMessages.RESTORE_DESCRIPTION
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Category restored successfully",
+                    description = CategorySwaggerMessages.RESTORE_SUCCESS,
                     content = @Content(schema = @Schema(implementation = CategoryResponse.class))
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Cannot restore: An active category with the same name already exists"
+                    description = CategorySwaggerMessages.RESTORE_BAD_REQUEST
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "Deleted category not found with the specified ID"
+                    description = CategorySwaggerMessages.RESTORE_NOT_FOUND
             )
     })
     @PostMapping("/{id}/restore")
     public ResponseEntity<CategoryResponse> restoreCategory(
-            @Parameter(description = "Unique identifier of the deleted category to restore", example = "1", required = true)
+            @Parameter(description = CategorySwaggerMessages.RESTORE_PARAM_ID, example = "1", required = true)
             @PathVariable Long id,
-            @Parameter(description = "ID of the user restoring the category (optional, defaults to 1)", example = "1")
+            @Parameter(description = CategorySwaggerMessages.RESTORE_PARAM_USER_ID, example = "1")
             @RequestHeader(value = "X-User-Id", required = false) Long userId) {
         Long restoredBy = userId != null ? userId : 1L;
         CategoryResponse category = categoryService.restoreCategory(id, restoredBy);

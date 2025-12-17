@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.threepixeldev.saungeraadmin.shared.data.model.Category;
 import org.threepixeldev.saungeraadmin.shared.data.model.User;
 
 @Repository
@@ -28,7 +29,12 @@ public interface UserJpaRepository extends JpaRepository<User, Long> {
 		        @Param("keyword") String keyword,
 		        Pageable pageable
 		);
+	@Query("SELECT u FROM User u WHERE u.id = :id AND u.deletedAt IS NULL")
+    Optional<User> findByIdNotDeleted(Long id);
 	
+    @Query("SELECT u FROM User u WHERE u.id = :id AND u.deletedAt IS NOT NULL")
+    Optional<User> findByIdDeleted(Long id);
+    
     Optional<User> findByUsername(String username);
     Optional<User> findByEmail(String email);
     boolean existsByUsername(String username);

@@ -7,7 +7,6 @@ package org.threepixeldev.saungeraadmin.features.user.constants;
  * managed centrally in the properties file and resolved by Spring.
  */
 public class UserSwaggerMessages {
-
     // User Controller Tag
     public static final String TAG_NAME = "${api.user.controller.tag}";
     public static final String TAG_DESCRIPTION = "${api.user.controller.tag.description}";
@@ -21,4 +20,8 @@ public class UserSwaggerMessages {
     public static final String USER_EMAIL_DESCRIPTION = "${api.user.email.description}";
     public static final String USER_PHONE_NUMBER_DESCRIPTION = "${api.user.phone.number.description}";
     public static final String USER_PASSWORD_DESCRIPTION = "${api.user.password.description}";
+    
+    public static final String GET_ALL_USERS = "${api.user.get.all.summary}";
+    public static final String GET_ALL_DESCRIPTION = "${api.user.get.all.description}";
+    public static final String GET_ALL_SUCCESS = "${api.user.get.all.success}";
 }

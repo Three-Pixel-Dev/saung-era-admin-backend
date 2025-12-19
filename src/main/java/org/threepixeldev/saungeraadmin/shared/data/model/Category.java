@@ -22,8 +22,10 @@ public class Category extends MasterEntity {
 
     private String description;
 
-    @ManyToMany(mappedBy = "categories")
-    private List<Product> products;
+
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductCategory> productCategories;
+
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Promotion> promotions;

@@ -9,7 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.threepixeldev.saungeraadmin.features.product.constants.ProductSwaggerMessages;
-
+import jakarta.validation.constraints.NotEmpty;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -54,7 +54,7 @@ public class ProductRequest {
 
     @Schema(description = ProductSwaggerMessages.PRODUCT_COUNTRY_ID_DESCRIPTION, example = "1")
     private Long countryId;
-
+    @NotEmpty(message = "{validation.product.category.required}")
     @Schema(description = ProductSwaggerMessages.PRODUCT_CATEGORY_IDS_DESCRIPTION, example = "[1, 2]")
     private List<Long> categoryIds;
 }

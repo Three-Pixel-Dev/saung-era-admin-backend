@@ -22,6 +22,8 @@ public class Category extends MasterEntity {
 
     private String description;
 
+    @Column(name = "parent_id")
+    private Long parentId;
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductCategory> productCategories;

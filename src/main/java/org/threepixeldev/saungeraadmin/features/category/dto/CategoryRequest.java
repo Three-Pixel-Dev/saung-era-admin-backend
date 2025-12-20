@@ -18,4 +18,7 @@ public class CategoryRequest {
 
     @Schema(description = CategorySwaggerMessages.CATEGORY_DESCRIPTION_DESCRIPTION, example = "This category contains all men's clothing items", maxLength = 1000)
     private String description;
+
+    @Schema(description = CategorySwaggerMessages.CATEGORY_PARENT_ID_DESCRIPTION, example = "1")
+    private Long parentId;
 }

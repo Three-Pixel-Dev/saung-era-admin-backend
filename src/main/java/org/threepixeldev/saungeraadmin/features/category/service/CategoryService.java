@@ -73,8 +73,13 @@ public class CategoryService {
                     }
                 });
 
+        if (request.getParentId() != null && request.getParentId().equals(id)) {
+            throw new RuntimeException("Category cannot be its own parent");
+        }
+
         category.setName(request.getName());
         category.setDescription(request.getDescription());
+        category.setParentId(request.getParentId());
         category.setUpdatedBy(updatedBy);
 
         Category updatedCategory = categoryRepository.save(category);

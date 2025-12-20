@@ -23,4 +23,6 @@ public interface CategoryJpaRepository extends JpaRepository<Category, Long> {
     
     @Query("SELECT c FROM Category c WHERE c.name = :name AND c.deletedAt IS NULL")
     Optional<Category> findByNameNotDeleted(String name);
+
+    List<Category> findByParentId(Long parentId);
 }

@@ -26,6 +26,7 @@ public class CategoryMapper {
         response.setId(category.getId());
         response.setName(category.getName());
         response.setDescription(category.getDescription());
+        response.setParentId(category.getParentId());
         response.setCreatedAt(category.getCreatedAt());
         response.setUpdatedAt(category.getUpdatedAt());
         response.setDeletedAt(category.getDeletedAt());
@@ -59,6 +60,7 @@ public class CategoryMapper {
         Category category = new Category();
         category.setName(request.getName());
         category.setDescription(request.getDescription());
+        category.setParentId(request.getParentId());
         return category;
     }
 }

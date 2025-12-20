@@ -18,6 +18,7 @@ public class CategorySwaggerMessages {
     public static final String CATEGORY_ID_DESCRIPTION = "${api.category.id.description}";
     public static final String CATEGORY_NAME_DESCRIPTION = "${api.category.name.description}";
     public static final String CATEGORY_DESCRIPTION_DESCRIPTION = "${api.category.description.description}";
+    public static final String CATEGORY_PARENT_ID_DESCRIPTION = "${api.category.parent.id.description}";
 
     // Category Operations - Get All
     public static final String GET_ALL_SUMMARY = "${api.category.get.all.summary}";

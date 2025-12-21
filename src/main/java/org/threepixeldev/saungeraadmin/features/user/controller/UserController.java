@@ -1,6 +1,7 @@
 package org.threepixeldev.saungeraadmin.features.user.controller;
 
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -13,11 +14,11 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.threepixeldev.saungeraadmin.features.category.constants.CategorySwaggerMessages;
 import org.threepixeldev.saungeraadmin.features.category.dto.CategoryResponse;
 import org.threepixeldev.saungeraadmin.features.user.constants.UserSwaggerMessages;
-import org.threepixeldev.saungeraadmin.shared.dto.UserResponse;
 import org.threepixeldev.saungeraadmin.features.user.service.UserService;
+import org.threepixeldev.saungeraadmin.features.user.dto.UserResponse;
+import org.threepixeldev.saungeraadmin.features.user.dto.UserResponseDetails;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -33,7 +34,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Tag(name = UserSwaggerMessages.TAG_NAME, description = UserSwaggerMessages.TAG_DESCRIPTION)
 public class UserController {
-
+	private static final Set<String> ALLOWED_STATUSES = Set.of("ACTIVE", "BLOCKED", "ALL");
+	
 	private final UserService userService;
 
 	@Operation(summary = UserSwaggerMessages.GET_ALL_USERS, description = UserSwaggerMessages.GET_ALL_DESCRIPTION)
@@ -41,9 +43,23 @@ public class UserController {
 			@ApiResponse(responseCode = "200", description = UserSwaggerMessages.GET_ALL_SUCCESS, content = @Content(schema = @Schema(implementation = UserResponse.class))) })
 	@GetMapping
 	public ResponseEntity<Map<String, Object>> getAllUsers(@RequestParam(required = false) String keyword,
+			@RequestParam(required = false) String status,
 			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+		if (status != null && !status.isEmpty()) {
+	        String normalizedStatus = status.toUpperCase();
+	        
+	        if (!ALLOWED_STATUSES.contains(normalizedStatus)) {
+	            return ResponseEntity.badRequest()
+	                .body(Map.of("error", "Invalid status. Allowed values are: " + ALLOWED_STATUSES));
+	        }
+	        if ("ALL".equals(normalizedStatus)) {
+	            status = null;
+	        } else {
+	            status = normalizedStatus;
+	        }
+	    }
 		Pageable pageable = PageRequest.of(page, size);
-		Map<String, Object> response = userService.getAllUsers(keyword, pageable);
+		Map<String, Object> response = userService.getAllUsers(keyword, pageable,status);
 		return ResponseEntity.ok(response);
 	}
 	
@@ -63,10 +79,10 @@ public class UserController {
             )
     })
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> getUserById(
+    public ResponseEntity<UserResponseDetails> getUserById(
             @Parameter(description = UserSwaggerMessages.GET_BY_ID_PARAM_ID, example = "1", required = true)
             @PathVariable Long id) {
-		UserResponse response = userService.getUserById(id);
+		UserResponseDetails response = userService.getUserById(id);
         return ResponseEntity.ok(response);
     }
 	
@@ -115,13 +131,13 @@ public class UserController {
             )
     })
     @PostMapping("/{id}/unblock")
-    public ResponseEntity<UserResponse> unblockUser(
+    public ResponseEntity<String> unblockUser(
             @Parameter(description = UserSwaggerMessages.UNBLOCK_PARAM_ID, example = "1", required = true)
             @PathVariable Long id,
             @Parameter(description = UserSwaggerMessages.UNBLOCK_PARAM_USER_ID, example = "1")
             @RequestHeader(value = "X-User-Id", required = false) Long userId) {
         Long unblockedBy = userId != null ? userId : 1L;
-        UserResponse category = userService.unblockUser(id, unblockedBy);
-        return ResponseEntity.ok(category);
+        String message = userService.unblockUser(id, unblockedBy);
+        return ResponseEntity.ok(message);
     }
 }

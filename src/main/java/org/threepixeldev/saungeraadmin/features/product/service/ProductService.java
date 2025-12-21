@@ -3,6 +3,8 @@ package org.threepixeldev.saungeraadmin.features.product.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.threepixeldev.saungeraadmin.features.product.dto.ProductRequest;
@@ -14,6 +16,7 @@ import org.threepixeldev.saungeraadmin.shared.data.model.ProductCategory;
 import org.threepixeldev.saungeraadmin.shared.data.repository.jpa.CategoryJpaRepository;
 import org.threepixeldev.saungeraadmin.shared.data.repository.jpa.ProductCategoryJpaRepository;
 import org.threepixeldev.saungeraadmin.shared.data.repository.jpa.ProductJpaRepository;
+import org.threepixeldev.saungeraadmin.shared.dto.PagedResponse;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +29,7 @@ public class ProductService {
 
     private static final String CACHE_NAME = "products";
     private static final String CACHE_KEY_ALL = "'all'";
+    private static final String CACHE_PAGINATION_KEY = "#keyword + '_' + #pageable.pageNumber + '_' + #pageable.pageSize";
     private static final String CACHE_KEY_BY_ID = "'product:' + #id";
 
     private final ProductJpaRepository productRepository;
@@ -33,13 +37,22 @@ public class ProductService {
     private final ProductCategoryJpaRepository productCategoryRepository;
     private final ProductMapper productMapper;
 
-    @Cacheable(value = CACHE_NAME, key = CACHE_KEY_ALL, unless = "#result.isEmpty()")
+
+    @Cacheable(value = CACHE_NAME, key = CACHE_PAGINATION_KEY, unless = "#result.content.isEmpty()")
     @Transactional(readOnly = true)
-    public List<ProductResponse> getAllProducts() {
-        return productRepository.findAll().stream()
-                .filter(p -> p.getDeletedAt() == null)
+    public PagedResponse<ProductResponse> getAllProducts(String keyword, Pageable pageable) {
+        Page<Product> productPage = productRepository.findAllFilteredNotDeleted(keyword, pageable);
+        List<ProductResponse> content = productPage.getContent().stream()
                 .map(productMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
+
+        return PagedResponse.<ProductResponse>builder()
+                .content(content)
+                .totalElements(productPage.getTotalElements())
+                .totalPages(productPage.getTotalPages())
+                .pageNumber(productPage.getNumber())
+                .pageSize(productPage.getSize())
+                .build();
     }
 
     @Cacheable(value = CACHE_NAME, key = CACHE_KEY_BY_ID, unless = "#result == null")

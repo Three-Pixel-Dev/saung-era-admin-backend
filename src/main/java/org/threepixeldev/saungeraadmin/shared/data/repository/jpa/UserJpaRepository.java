@@ -16,24 +16,32 @@ public interface UserJpaRepository extends JpaRepository<User, Long> {
 	
 	@Query("""
 		    SELECT u FROM User u
-		    WHERE u.deletedAt IS NULL
-		      AND (
+		    WHERE 
+		      (
 		           :keyword IS NULL
 		        OR LOWER(u.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
 		        OR LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%'))
 		        OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
 		        OR u.phoneNumber LIKE CONCAT('%', :keyword, '%')
 		      )
+		      AND (
+		           (:status IS NULL)                                   
+		        OR (:status = 'ACTIVE' AND u.deletedAt IS NULL)        
+		        OR (:status = 'BLOCKED' AND u.deletedAt IS NOT NULL)   
+		      )
 		""")
-		Page<User> findAllFilteredNotDeleted(
+		Page<User> findAllFilteredWithStatus(
 		        @Param("keyword") String keyword,
-		        Pageable pageable
+		        Pageable pageable, String status
 		);
 	@Query("SELECT u FROM User u WHERE u.id = :id AND u.deletedAt IS NULL")
     Optional<User> findByIdNotDeleted(Long id);
 	
     @Query("SELECT u FROM User u WHERE u.id = :id AND u.deletedAt IS NOT NULL")
     Optional<User> findByIdDeleted(Long id);
+    
+    @Query("SELECT u FROM User u WHERE u.id = :id")
+    Optional<User> findById(Long id);
     
     Optional<User> findByUsername(String username);
     Optional<User> findByEmail(String email);

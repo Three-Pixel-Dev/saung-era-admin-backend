@@ -70,14 +70,13 @@ public class UserServiceImpl implements UserService {
 	public void blockUser(Long id, Long deletedBy) {
 		User user = userJpaRepository.findByIdNotDeleted(id)
 				.orElseThrow(() -> new RuntimeException("User not found with id: " + id));
-
 		user.delete(deletedBy);
 		userJpaRepository.save(user);
 	}
 
 	@Override
 	@CacheEvict(value = CACHE_NAME, allEntries = true)
-	public String unblockUser(Long id, Long restoredBy) {
+	public Map<String, String> unblockUser(Long id, Long restoredBy) {
 		User user = userJpaRepository.findByIdDeleted(id)
 				.orElseThrow(() -> new RuntimeException("Blocked user not found with id: " + id));
 
@@ -86,6 +85,6 @@ public class UserServiceImpl implements UserService {
 
 		userJpaRepository.save(user);
 		
-		return "Unblock success.";
+		return Map.of("message", "Unblock success.");
 	}
 }

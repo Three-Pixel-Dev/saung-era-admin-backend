@@ -131,13 +131,13 @@ public class UserController {
             )
     })
     @PostMapping("/{id}/unblock")
-    public ResponseEntity<String> unblockUser(
+    public ResponseEntity<Map<String,String>> unblockUser(
             @Parameter(description = UserSwaggerMessages.UNBLOCK_PARAM_ID, example = "1", required = true)
             @PathVariable Long id,
             @Parameter(description = UserSwaggerMessages.UNBLOCK_PARAM_USER_ID, example = "1")
             @RequestHeader(value = "X-User-Id", required = false) Long userId) {
         Long unblockedBy = userId != null ? userId : 1L;
-        String message = userService.unblockUser(id, unblockedBy);
+        Map<String,String> message = userService.unblockUser(id, unblockedBy);
         return ResponseEntity.ok(message);
     }
 }

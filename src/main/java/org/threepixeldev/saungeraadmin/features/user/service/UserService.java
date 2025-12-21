@@ -9,5 +9,5 @@ public interface UserService {
 	Map<String, Object> getAllUsers(String keyword,Pageable pageable,String status);
 	UserResponseDetails getUserById(Long id);
 	void blockUser(Long id, Long deletedBy);
-	String unblockUser(Long id, Long restoredBy);
+	Map<String, String> unblockUser(Long id, Long restoredBy);
 }

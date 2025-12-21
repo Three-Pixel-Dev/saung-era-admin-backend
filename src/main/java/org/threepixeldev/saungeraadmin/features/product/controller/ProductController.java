@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +18,7 @@ import org.threepixeldev.saungeraadmin.features.product.constants.ProductSwagger
 import org.threepixeldev.saungeraadmin.features.product.dto.ProductRequest;
 import org.threepixeldev.saungeraadmin.features.product.dto.ProductResponse;
 import org.threepixeldev.saungeraadmin.features.product.service.ProductService;
+import org.threepixeldev.saungeraadmin.shared.dto.PagedResponse;
 
 import java.util.List;
 
@@ -30,11 +33,15 @@ public class ProductController {
     @Operation(summary = "Get all products")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved list of products",
-                    content = @Content(schema = @Schema(implementation = ProductResponse.class)))
+                    content = @Content(schema = @Schema(implementation = PagedResponse.class)))
     })
     @GetMapping
-    public ResponseEntity<List<ProductResponse>> getAllProducts() {
-        return ResponseEntity.ok(productService.getAllProducts());
+    public ResponseEntity<PagedResponse<ProductResponse>> getAllProducts(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(productService.getAllProducts(keyword, pageable));
     }
 
     @Operation(summary = "Get product by ID")

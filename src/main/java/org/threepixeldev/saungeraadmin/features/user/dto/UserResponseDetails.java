@@ -1,6 +1,7 @@
 package org.threepixeldev.saungeraadmin.features.user.dto;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import org.threepixeldev.saungeraadmin.features.user.constants.UserSwaggerMessages;
 
@@ -42,4 +43,7 @@ public class UserResponseDetails {
     private String referralCode;
     
     private Integer totalOrder;
+
+    @Schema(description = "Timestamp when the entity was created", example = "2025-12-14T15:30:00")
+    private LocalDateTime createdAt;
 }

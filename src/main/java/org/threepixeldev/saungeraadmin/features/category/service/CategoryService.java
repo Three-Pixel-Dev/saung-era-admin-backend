@@ -3,6 +3,8 @@ package org.threepixeldev.saungeraadmin.features.category.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.threepixeldev.saungeraadmin.features.category.dto.CategoryRequest;
@@ -10,16 +12,16 @@ import org.threepixeldev.saungeraadmin.features.category.dto.CategoryResponse;
 import org.threepixeldev.saungeraadmin.features.category.mapper.CategoryMapper;
 import org.threepixeldev.saungeraadmin.shared.data.model.Category;
 import org.threepixeldev.saungeraadmin.shared.data.repository.jpa.CategoryJpaRepository;
+import org.threepixeldev.saungeraadmin.shared.dto.PagedResponse;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class CategoryService {
 
     private static final String CACHE_NAME = "categories";
-    private static final String CACHE_KEY_ALL = "'all'";
+    private static final String CACHE_PAGINATION_KEY = "#keyword + '_' + #status + '_' + #pageable.pageNumber + '_' + #pageable.pageSize";
     private static final String CACHE_KEY_BY_ID = "'category:' + #id";
 
     private final CategoryJpaRepository categoryRepository;
@@ -31,12 +33,22 @@ public class CategoryService {
         this.categoryMapper = categoryMapper;
     }
 
-    @Cacheable(value = CACHE_NAME, key = CACHE_KEY_ALL, unless = "#result.isEmpty()")
+    @Cacheable(value = CACHE_NAME, key = CACHE_PAGINATION_KEY, unless = "#result.content.isEmpty()")
     @Transactional(readOnly = true)
-    public List<CategoryResponse> getAllCategories() {
-        return categoryRepository.findAllNotDeleted().stream()
+    public PagedResponse<CategoryResponse> getAllCategories(String keyword, String status, Pageable pageable) {
+        Page<Category> categoryPage = categoryRepository.findAllFilteredWithStatus(keyword, status, pageable);
+
+        List<CategoryResponse> content = categoryPage.getContent().stream()
                 .map(categoryMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
+
+        return PagedResponse.<CategoryResponse>builder()
+                .content(content)
+                .totalElements(categoryPage.getTotalElements())
+                .totalPages(categoryPage.getTotalPages())
+                .pageNumber(categoryPage.getNumber())
+                .pageSize(categoryPage.getSize())
+                .build();
     }
 
     @Cacheable(value = CACHE_NAME, key = CACHE_KEY_BY_ID, unless = "#result == null")

@@ -6,6 +6,7 @@ import org.threepixeldev.saungeraadmin.features.category.dto.CategoryRequest;
 import org.threepixeldev.saungeraadmin.features.category.dto.CategoryResponse;
 import org.threepixeldev.saungeraadmin.shared.data.model.Category;
 import org.threepixeldev.saungeraadmin.shared.data.model.User;
+import org.threepixeldev.saungeraadmin.shared.data.repository.jpa.CategoryJpaRepository;
 import org.threepixeldev.saungeraadmin.shared.data.repository.jpa.UserJpaRepository;
 import org.threepixeldev.saungeraadmin.shared.mapper.UserMapper;
 
@@ -14,7 +15,7 @@ import org.threepixeldev.saungeraadmin.shared.mapper.UserMapper;
 public class CategoryMapper {
 
     private final UserJpaRepository userRepository;
-
+    private final CategoryJpaRepository categoryRepository;
     private final UserMapper userMapper;
 
     public CategoryResponse toResponse(Category category) {
@@ -26,23 +27,33 @@ public class CategoryMapper {
         response.setId(category.getId());
         response.setName(category.getName());
         response.setDescription(category.getDescription());
-        response.setParentId(category.getParentId());
+
+        if (category.getParentId() != null) {
+            categoryRepository.findById(category.getParentId()).ifPresent(parent -> {
+                CategoryResponse parentResponse = new CategoryResponse();
+                parentResponse.setId(parent.getId());
+                parentResponse.setName(parent.getName());
+                parentResponse.setDescription(parent.getDescription());
+                response.setParentCategory(parentResponse);
+            });
+        }
+
         response.setCreatedAt(category.getCreatedAt());
         response.setUpdatedAt(category.getUpdatedAt());
         response.setDeletedAt(category.getDeletedAt());
-        
+
         // Map createdBy
         if (category.getCreatedBy() != null) {
             User createdByUser = userRepository.findById(category.getCreatedBy()).orElse(null);
             response.setCreatedBy(userMapper.toUserResponse(createdByUser));
         }
-        
+
         // Map updatedBy
         if (category.getUpdatedBy() != null) {
             User updatedByUser = userRepository.findById(category.getUpdatedBy()).orElse(null);
             response.setUpdatedBy(userMapper.toUserResponse(updatedByUser));
         }
-        
+
         // Map deletedBy
         if (category.getDeletedBy() != null) {
             User deletedByUser = userRepository.findById(category.getDeletedBy()).orElse(null);

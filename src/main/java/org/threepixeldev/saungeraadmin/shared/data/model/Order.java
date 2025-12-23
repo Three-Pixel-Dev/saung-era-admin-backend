@@ -38,4 +38,7 @@ public class Order extends MasterEntity {
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems;
+
+    @Column(nullable = false)
+    private String status;
 }

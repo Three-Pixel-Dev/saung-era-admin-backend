@@ -9,7 +9,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.threepixeldev.saungeraadmin.features.product.constants.ProductSwaggerMessages;
-import jakarta.validation.constraints.NotEmpty;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -35,6 +34,22 @@ public class ProductRequest {
     @Schema(description = ProductSwaggerMessages.PRODUCT_PRICE_DESCRIPTION, example = "29.99")
     private BigDecimal price;
 
+    @Schema(description = ProductSwaggerMessages.PRODUCT_STATUS_DESCRIPTION, example = "Active")
+    private String status;
+
+    @Schema(description = ProductSwaggerMessages.PRODUCT_TAGS_DESCRIPTION, example = "Modern,Interior")
+    private String tags;
+
+    @NotBlank(message = "SKU is required")
+    @Schema(description = ProductSwaggerMessages.PRODUCT_SKU_DESCRIPTION, example = "CHR-001")
+    private String sku;
+
+    @Schema(description = ProductSwaggerMessages.PRODUCT_IS_TAXABLE_DESCRIPTION, example = "true")
+    private Boolean isTaxable;
+
+    @Schema(description = ProductSwaggerMessages.PRODUCT_ALLOW_BACKORDER_DESCRIPTION, example = "false")
+    private Boolean allowBackorder;
+
     @Schema(description = ProductSwaggerMessages.PRODUCT_DISCOUNT_TYPE_DESCRIPTION, example = "PERCENTAGE")
     private String discountType;
 
@@ -54,7 +69,7 @@ public class ProductRequest {
 
     @Schema(description = ProductSwaggerMessages.PRODUCT_COUNTRY_ID_DESCRIPTION, example = "1")
     private Long countryId;
-    @NotEmpty(message = "{validation.product.category.required}")
+    // @NotEmpty removed to handle deactivation of products with no categories
     @Schema(description = ProductSwaggerMessages.PRODUCT_CATEGORY_IDS_DESCRIPTION, example = "[1, 2]")
     private List<Long> categoryIds;
 }

@@ -46,6 +46,19 @@ public class Product extends MasterEntity {
     @Column(name = "country_id")
     private Long countryId;
 
+    @Column(nullable = false, unique = true)
+    private String sku;
+
+    @Column(name = "is_taxable")
+    private Boolean isTaxable;
+
+    @Column(name = "allow_backorder")
+    private Boolean allowBackorder;
+
+    @Column(name = "status")
+    private String status;
+    @Column(name = "tags")
+    private String tags;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductCategory> productCategories;

@@ -38,7 +38,15 @@ public class ProductMapper {
         response.setWeight(product.getWeight());
         response.setCountryId(product.getCountryId());
 
-        // UPDATED: Map categories via ProductCategory entity
+        // --- FIX: Map the missing fields so they appear in Edit Mode ---
+        response.setSku(product.getSku());
+        response.setStatus(product.getStatus());
+        response.setIsTaxable(product.getIsTaxable());
+        response.setAllowBackorder(product.getAllowBackorder());
+        response.setTags(product.getTags());
+        // -------------------------------------------------------------
+
+        // Map categories via ProductCategory entity
         if (product.getProductCategories() != null) {
             response.setCategories(product.getProductCategories().stream()
                     .map(pc -> categoryMapper.toResponse(pc.getCategory()))

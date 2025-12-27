@@ -21,6 +21,7 @@ public class UserJdbcRepository {
 		String sql = """
 				    SELECT
 				        u.id, u.name, u.username, u.email, u.phone_number, u.deleted_at,
+						u.created_at,
 				        p.address, p.kyc, p.date_of_birth, p.points, p.referral_code,
 				        (SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id) as total_order
 				    FROM users u
@@ -62,6 +63,10 @@ public class UserJdbcRepository {
 
 			dto.setTotalOrder(rs.getInt("total_order"));
 
+			Timestamp createdAtTs = rs.getTimestamp("created_at");
+			if (createdAtTs != null) {
+				dto.setCreatedAt(createdAtTs.toLocalDateTime());
+			}
 			return dto;
 		}
 	}

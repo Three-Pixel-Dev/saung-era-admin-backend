@@ -55,4 +55,19 @@ public class ProductResponse extends MasterData {
 
     @Schema(description = ProductSwaggerMessages.PRODUCT_CATEGORIES_DESCRIPTION)
     private List<CategoryResponse> categories;
+
+    @Schema(description = ProductSwaggerMessages.PRODUCT_SKU_DESCRIPTION, example = "CHR-001")
+    private String sku;
+
+    @Schema(description = ProductSwaggerMessages.PRODUCT_STATUS_DESCRIPTION, example = "Active")
+    private String status;
+
+    @Schema(description = ProductSwaggerMessages.PRODUCT_IS_TAXABLE_DESCRIPTION, example = "true")
+    private Boolean isTaxable;
+
+    @Schema(description = ProductSwaggerMessages.PRODUCT_ALLOW_BACKORDER_DESCRIPTION, example = "false")
+    private Boolean allowBackorder;
+
+    @Schema(description = ProductSwaggerMessages.PRODUCT_TAGS_DESCRIPTION, example = "Modern,Interior")
+    private String tags;
 }

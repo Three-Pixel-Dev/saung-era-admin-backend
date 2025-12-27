@@ -25,6 +25,6 @@ public class CategoryResponse extends MasterData {
     @Schema(description = CategorySwaggerMessages.CATEGORY_DESCRIPTION_DESCRIPTION, example = "This category contains all men's clothing items")
     private String description;
 
-    @Schema(description = CategorySwaggerMessages.CATEGORY_PARENT_ID_DESCRIPTION, example = "1")
-    private Long parentId;
+    @Schema(description = "Parent category details including id and name")
+    private CategoryResponse parentCategory;
 }

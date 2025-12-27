@@ -16,11 +16,11 @@ public interface OrderItemJpaRepository extends JpaRepository<OrderItem, Long> {
     void deleteByOrderId(Long orderId);
 
     @Query("SELECT new org.threepixeldev.saungeraadmin.features.dashboard.dto.TopProductResponse(" +
-            "p.name, p.price, SUM(oi.quantity), " +
-            "CASE WHEN p.quantity < 10 THEN 'Low Stock' ELSE 'In Stock' END) " +
+            "p.name, CAST(0 AS java.math.BigDecimal), SUM(oi.quantity), " +
+            "'N/A') " +
             "FROM OrderItem oi " +
             "JOIN oi.product p " +
-            "GROUP BY p.id, p.name, p.price, p.quantity " +
+            "GROUP BY p.id, p.name " +
             "ORDER BY SUM(oi.quantity) DESC")
     List<TopProductResponse> findTopSellingProducts(Pageable pageable);
 }

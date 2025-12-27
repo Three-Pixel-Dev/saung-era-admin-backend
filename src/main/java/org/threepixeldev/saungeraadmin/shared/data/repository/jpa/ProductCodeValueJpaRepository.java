@@ -10,8 +10,10 @@ import java.util.Optional;
 @Repository
 public interface ProductCodeValueJpaRepository extends JpaRepository<ProductCodeValue, Long> {
     List<ProductCodeValue> findByProductId(Long productId);
-    List<ProductCodeValue> findByCodeValueId(Long codeValueId);
-    Optional<ProductCodeValue> findByProductIdAndCodeValueId(Long productId, Long codeValueId);
+    List<ProductCodeValue> findByColorId(Long colorId);
+    List<ProductCodeValue> findBySizeId(Long sizeId);
+    Optional<ProductCodeValue> findByProductIdAndColorIdAndSizeId(Long productId, Long colorId, Long sizeId);
     void deleteByProductId(Long productId);
-    void deleteByCodeValueId(Long codeValueId);
+    void deleteByColorId(Long colorId);
+    void deleteBySizeId(Long sizeId);
 }

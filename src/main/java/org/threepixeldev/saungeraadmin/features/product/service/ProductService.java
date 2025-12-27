@@ -7,17 +7,16 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus; // Import Added
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import org.springframework.web.server.ResponseStatusException; // Import Added
+import org.springframework.web.server.ResponseStatusException;
 import org.threepixeldev.saungeraadmin.features.product.dto.ProductCodeValueRequest;
 import org.threepixeldev.saungeraadmin.features.product.dto.ProductRequest;
 import org.threepixeldev.saungeraadmin.features.product.dto.ProductResponse;
 import org.threepixeldev.saungeraadmin.features.product.mapper.ProductMapper;
 import org.threepixeldev.saungeraadmin.shared.data.model.Category;
-import org.threepixeldev.saungeraadmin.shared.data.model.CodeValue;
 import org.threepixeldev.saungeraadmin.shared.data.model.Product;
 import org.threepixeldev.saungeraadmin.shared.data.model.ProductCategory;
 import org.threepixeldev.saungeraadmin.shared.data.model.ProductCodeValue;
@@ -36,7 +35,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProductService {
 
-    // ... (Constants and Variables remain same)
     private static final String CACHE_NAME = "products";
     private static final String CACHE_KEY_BY_ID = "'product:' + #id";
 
@@ -50,14 +48,8 @@ public class ProductService {
     @PersistenceContext
     private EntityManager entityManager;
 
-    // ... (getAllProducts, getProductById methods remain same) ...
-
     @CacheEvict(value = CACHE_NAME, allEntries = true)
     public ProductResponse createProduct(ProductRequest request, Long createdBy) {
-
-        if (productRepository.existsBySkuAndDeletedAtIsNull(request.getSku())) {
-            throw new RuntimeException( "SKU already exists");
-        }
 
         Product product = new Product();
         updateProductFields(product, request);
@@ -71,7 +63,7 @@ public class ProductService {
         }
 
         if (!CollectionUtils.isEmpty(request.getProductCodeValues())) {
-            saveProductCodeValues(savedProduct, request.getProductCodeValues(), createdBy);
+            saveProductCodeValues(savedProduct, request.getProductCodeValues(), createdBy, false);
         }
 
         return productMapper.toResponse(savedProduct);
@@ -82,11 +74,6 @@ public class ProductService {
         Product product = productRepository.findById(id)
                 .filter(p -> p.getDeletedAt() == null)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
-
-        // Validation: 500 Error အစား 400 Bad Request ပြန်ပေးပါမည်
-        if (productRepository.existsBySkuAndIdNotAndDeletedAtIsNull(request.getSku(), id)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "SKU already exists");
-        }
 
         updateProductFields(product, request);
         product.setUpdatedBy(updatedBy);
@@ -104,15 +91,20 @@ public class ProductService {
         if (!CollectionUtils.isEmpty(request.getProductCodeValues())) {
             productCodeValueRepository.deleteByProductId(savedProduct.getId());
             productCodeValueRepository.flush();
-            saveProductCodeValues(savedProduct, request.getProductCodeValues(), updatedBy);
+            saveProductCodeValues(savedProduct, request.getProductCodeValues(), updatedBy, true);
             entityManager.flush();
             entityManager.refresh(savedProduct);
+        } else {
+            List<ProductCodeValue> existingCodeValues = productCodeValueRepository.findByProductId(savedProduct.getId());
+            if (!existingCodeValues.isEmpty()) {
+                productCodeValueRepository.deleteByProductId(savedProduct.getId());
+                productCodeValueRepository.flush();
+            }
         }
 
         return productMapper.toResponse(savedProduct);
     }
 
-    // ... (saveProductCategories, deleteProduct, hardDeleteProduct, restoreProduct remain same) ...
     private void saveProductCategories(Product product, List<Long> categoryIds, Long userId) {
         List<Category> categories = categoryRepository.findAllById(categoryIds);
         List<ProductCategory> productCategories = new ArrayList<>();
@@ -127,21 +119,39 @@ public class ProductService {
         productCategoryRepository.saveAll(productCategories);
     }
 
-    private void saveProductCodeValues(Product product, List<ProductCodeValueRequest> productCodeValueRequests, Long userId) {
+    private void saveProductCodeValues(Product product, List<ProductCodeValueRequest> productCodeValueRequests, Long userId, boolean isUpdate) {
         List<ProductCodeValue> productCodeValues = new ArrayList<>();
         for (ProductCodeValueRequest request : productCodeValueRequests) {
-            CodeValue codeValue = codeValueRepository.findById(request.getCodeValueId())
-                    .orElseThrow(() -> new RuntimeException("Code value not found with id: " + request.getCodeValueId()));
+            if (request.getColorId() != null && !codeValueRepository.existsById(request.getColorId())) {
+                throw new RuntimeException("Color code value not found with id: " + request.getColorId());
+            }
+            
+            if (request.getSizeId() != null && !codeValueRepository.existsById(request.getSizeId())) {
+                throw new RuntimeException("Size code value not found with id: " + request.getSizeId());
+            }
             
             ProductCodeValue pcv = new ProductCodeValue();
             pcv.setProduct(product);
-            pcv.setCodeValue(codeValue);
+            pcv.setColorId(request.getColorId());
+            pcv.setSizeId(request.getSizeId());
             pcv.setPrice(request.getPrice());
+            pcv.setQuantity(request.getQuantity());
             pcv.setCreatedBy(userId);
             pcv.setUpdatedBy(userId);
             productCodeValues.add(pcv);
         }
-        productCodeValueRepository.saveAll(productCodeValues);
+        List<ProductCodeValue> savedProductCodeValues = productCodeValueRepository.saveAll(productCodeValues);
+        
+        for (ProductCodeValue pcv : savedProductCodeValues) {
+            pcv.setSku("C" + pcv.getId());
+        }
+        List<ProductCodeValue> finalSavedValues = productCodeValueRepository.saveAll(savedProductCodeValues);
+        
+        for (ProductCodeValue pcv : finalSavedValues) {
+            if (pcv.getSku() == null || pcv.getSku().isEmpty()) {
+                throw new RuntimeException("Failed to generate SKU for product code value with id: " + pcv.getId());
+            }
+        }
     }
 
     @CacheEvict(value = CACHE_NAME, allEntries = true)
@@ -174,22 +184,18 @@ public class ProductService {
     private void updateProductFields(Product product, ProductRequest request) {
         product.setName(request.getName());
         product.setDescription(request.getDescription());
-        product.setQuantity(request.getQuantity());
-        product.setPrice(request.getPrice());
         product.setDiscountType(request.getDiscountType());
         product.setDiscountAmount(request.getDiscountAmount());
         product.setShortDescription(request.getShortDescription());
         product.setLongDescription(request.getLongDescription());
         product.setWeight(request.getWeight());
         product.setCountryId(request.getCountryId() != null ? request.getCountryId() : 1L);
-        product.setSku(request.getSku());
         product.setIsTaxable(request.getIsTaxable());
         product.setAllowBackorder(request.getAllowBackorder());
         product.setStatus(request.getStatus());
         product.setTags(request.getTags());
     }
 
-    // ... (Duplicate other methods if needed or keep existing ones)
     @Cacheable(value = CACHE_NAME, key = "{#keyword, #status, #categoryId, #pageable.pageNumber, #pageable.pageSize}", unless = "#result.content.isEmpty()")
     @Transactional(readOnly = true)
     public PagedResponse<ProductResponse> getAllProducts(String keyword, String status, Long categoryId, Pageable pageable) {

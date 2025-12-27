@@ -29,12 +29,6 @@ public class ProductResponse extends MasterData {
     @Schema(description = ProductSwaggerMessages.PRODUCT_DESCRIPTION_DESCRIPTION, example = "Comfortable cotton t-shirt")
     private String description;
 
-    @Schema(description = ProductSwaggerMessages.PRODUCT_QUANTITY_DESCRIPTION, example = "100")
-    private Integer quantity;
-
-    @Schema(description = ProductSwaggerMessages.PRODUCT_PRICE_DESCRIPTION, example = "29.99")
-    private BigDecimal price;
-
     @Schema(description = ProductSwaggerMessages.PRODUCT_DISCOUNT_TYPE_DESCRIPTION, example = "PERCENTAGE")
     private String discountType;
 
@@ -55,9 +49,6 @@ public class ProductResponse extends MasterData {
 
     @Schema(description = ProductSwaggerMessages.PRODUCT_CATEGORIES_DESCRIPTION)
     private List<CategoryResponse> categories;
-
-    @Schema(description = ProductSwaggerMessages.PRODUCT_SKU_DESCRIPTION, example = "CHR-001")
-    private String sku;
 
     @Schema(description = ProductSwaggerMessages.PRODUCT_STATUS_DESCRIPTION, example = "Active")
     private String status;

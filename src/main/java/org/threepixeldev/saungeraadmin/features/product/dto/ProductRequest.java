@@ -2,13 +2,12 @@ package org.threepixeldev.saungeraadmin.features.product.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.threepixeldev.saungeraadmin.features.product.constants.ProductSwaggerMessages;
+import org.threepixeldev.saungeraadmin.features.product.validation.ConditionalRequired;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -16,6 +15,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = ProductSwaggerMessages.PRODUCT_REQUEST_DESCRIPTION)
+@ConditionalRequired
 public class ProductRequest {
     @NotBlank(message = "{validation.product.name.required}")
     @Schema(description = ProductSwaggerMessages.PRODUCT_NAME_DESCRIPTION, example = "Men's T-Shirt", maxLength = 255)
@@ -24,25 +24,11 @@ public class ProductRequest {
     @Schema(description = ProductSwaggerMessages.PRODUCT_DESCRIPTION_DESCRIPTION, example = "Comfortable cotton t-shirt", maxLength = 1000)
     private String description;
 
-    @NotNull(message = "{validation.product.quantity.required}")
-    @Positive(message = "{validation.product.quantity.positive}")
-    @Schema(description = ProductSwaggerMessages.PRODUCT_QUANTITY_DESCRIPTION, example = "100")
-    private Integer quantity;
-
-    @NotNull(message = "{validation.product.price.required}")
-    @Positive(message = "{validation.product.price.positive}")
-    @Schema(description = ProductSwaggerMessages.PRODUCT_PRICE_DESCRIPTION, example = "29.99")
-    private BigDecimal price;
-
     @Schema(description = ProductSwaggerMessages.PRODUCT_STATUS_DESCRIPTION, example = "Active")
     private String status;
 
     @Schema(description = ProductSwaggerMessages.PRODUCT_TAGS_DESCRIPTION, example = "Modern,Interior")
     private String tags;
-
-    @NotBlank(message = "SKU is required")
-    @Schema(description = ProductSwaggerMessages.PRODUCT_SKU_DESCRIPTION, example = "CHR-001")
-    private String sku;
 
     @Schema(description = ProductSwaggerMessages.PRODUCT_IS_TAXABLE_DESCRIPTION, example = "true")
     private Boolean isTaxable;
@@ -69,10 +55,10 @@ public class ProductRequest {
 
     @Schema(description = ProductSwaggerMessages.PRODUCT_COUNTRY_ID_DESCRIPTION, example = "1")
     private Long countryId;
-    // @NotEmpty removed to handle deactivation of products with no categories
+
     @Schema(description = ProductSwaggerMessages.PRODUCT_CATEGORY_IDS_DESCRIPTION, example = "[1, 2]")
     private List<Long> categoryIds;
 
-    @Schema(description = "List of product code values with prices (e.g., Color: Blue, Size: S)", example = "[{\"codeValueId\": 1, \"price\": 29.99}, {\"codeValueId\": 2, \"price\": 31.99}]")
+    @Schema(description = "List of product code values with prices (e.g., Color: Blue, Size: S)", example = "[{\"colorId\": 1, \"sizeId\": 2, \"price\": 29.99, \"quantity\": 100}]")
     private List<ProductCodeValueRequest> productCodeValues;
 }

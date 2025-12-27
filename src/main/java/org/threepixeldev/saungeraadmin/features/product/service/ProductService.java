@@ -10,15 +10,21 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus; // Import Added
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.server.ResponseStatusException; // Import Added
+import org.threepixeldev.saungeraadmin.features.product.dto.ProductCodeValueRequest;
 import org.threepixeldev.saungeraadmin.features.product.dto.ProductRequest;
 import org.threepixeldev.saungeraadmin.features.product.dto.ProductResponse;
 import org.threepixeldev.saungeraadmin.features.product.mapper.ProductMapper;
 import org.threepixeldev.saungeraadmin.shared.data.model.Category;
+import org.threepixeldev.saungeraadmin.shared.data.model.CodeValue;
 import org.threepixeldev.saungeraadmin.shared.data.model.Product;
 import org.threepixeldev.saungeraadmin.shared.data.model.ProductCategory;
+import org.threepixeldev.saungeraadmin.shared.data.model.ProductCodeValue;
 import org.threepixeldev.saungeraadmin.shared.data.repository.jpa.CategoryJpaRepository;
+import org.threepixeldev.saungeraadmin.shared.data.repository.jpa.CodeValueJpaRepository;
 import org.threepixeldev.saungeraadmin.shared.data.repository.jpa.ProductCategoryJpaRepository;
+import org.threepixeldev.saungeraadmin.shared.data.repository.jpa.ProductCodeValueJpaRepository;
 import org.threepixeldev.saungeraadmin.shared.data.repository.jpa.ProductJpaRepository;
 import org.threepixeldev.saungeraadmin.shared.dto.PagedResponse;
 
@@ -37,6 +43,8 @@ public class ProductService {
     private final ProductJpaRepository productRepository;
     private final CategoryJpaRepository categoryRepository;
     private final ProductCategoryJpaRepository productCategoryRepository;
+    private final CodeValueJpaRepository codeValueRepository;
+    private final ProductCodeValueJpaRepository productCodeValueRepository;
     private final ProductMapper productMapper;
 
     @PersistenceContext
@@ -60,6 +68,10 @@ public class ProductService {
 
         if (request.getCategoryIds() != null && !request.getCategoryIds().isEmpty()) {
             saveProductCategories(savedProduct, request.getCategoryIds(), createdBy);
+        }
+
+        if (!CollectionUtils.isEmpty(request.getProductCodeValues())) {
+            saveProductCodeValues(savedProduct, request.getProductCodeValues(), createdBy);
         }
 
         return productMapper.toResponse(savedProduct);
@@ -89,6 +101,14 @@ public class ProductService {
             entityManager.refresh(savedProduct);
         }
 
+        if (!CollectionUtils.isEmpty(request.getProductCodeValues())) {
+            productCodeValueRepository.deleteByProductId(savedProduct.getId());
+            productCodeValueRepository.flush();
+            saveProductCodeValues(savedProduct, request.getProductCodeValues(), updatedBy);
+            entityManager.flush();
+            entityManager.refresh(savedProduct);
+        }
+
         return productMapper.toResponse(savedProduct);
     }
 
@@ -105,6 +125,23 @@ public class ProductService {
             productCategories.add(pc);
         }
         productCategoryRepository.saveAll(productCategories);
+    }
+
+    private void saveProductCodeValues(Product product, List<ProductCodeValueRequest> productCodeValueRequests, Long userId) {
+        List<ProductCodeValue> productCodeValues = new ArrayList<>();
+        for (ProductCodeValueRequest request : productCodeValueRequests) {
+            CodeValue codeValue = codeValueRepository.findById(request.getCodeValueId())
+                    .orElseThrow(() -> new RuntimeException("Code value not found with id: " + request.getCodeValueId()));
+            
+            ProductCodeValue pcv = new ProductCodeValue();
+            pcv.setProduct(product);
+            pcv.setCodeValue(codeValue);
+            pcv.setPrice(request.getPrice());
+            pcv.setCreatedBy(userId);
+            pcv.setUpdatedBy(userId);
+            productCodeValues.add(pcv);
+        }
+        productCodeValueRepository.saveAll(productCodeValues);
     }
 
     @CacheEvict(value = CACHE_NAME, allEntries = true)

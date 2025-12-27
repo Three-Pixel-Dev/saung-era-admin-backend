@@ -21,10 +21,18 @@ public class ProductCodeValue extends MasterEntity {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    @ManyToOne
-    @JoinColumn(name = "code_value_id", nullable = false)
-    private CodeValue codeValue;
+    @Column(name = "color_id")
+    private Long colorId;
+
+    @Column(name = "size_id")
+    private Long sizeId;
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal price;
+
+    @Column(nullable = false)
+    private Integer quantity;
+
+    @Column(unique = true)
+    private String sku;
 }

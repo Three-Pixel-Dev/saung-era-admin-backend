@@ -23,12 +23,6 @@ public class Product extends MasterEntity {
 
     private String description;
 
-    @Column(nullable = false)
-    private Integer quantity;
-
-    @Column(nullable = false, precision = 19, scale = 2)
-    private BigDecimal price;
-
     @Column(name = "discount_type")
     private String discountType;
 
@@ -45,9 +39,6 @@ public class Product extends MasterEntity {
 
     @Column(name = "country_id")
     private Long countryId;
-
-    @Column(nullable = false, unique = true)
-    private String sku;
 
     @Column(name = "is_taxable")
     private Boolean isTaxable;

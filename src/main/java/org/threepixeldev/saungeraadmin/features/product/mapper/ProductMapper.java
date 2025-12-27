@@ -29,8 +29,6 @@ public class ProductMapper {
         response.setId(product.getId());
         response.setName(product.getName());
         response.setDescription(product.getDescription());
-        response.setQuantity(product.getQuantity());
-        response.setPrice(product.getPrice());
         response.setDiscountType(product.getDiscountType());
         response.setDiscountAmount(product.getDiscountAmount());
         response.setShortDescription(product.getShortDescription());
@@ -38,8 +36,6 @@ public class ProductMapper {
         response.setWeight(product.getWeight());
         response.setCountryId(product.getCountryId());
 
-        // --- FIX: Map the missing fields so they appear in Edit Mode ---
-        response.setSku(product.getSku());
         response.setStatus(product.getStatus());
         response.setIsTaxable(product.getIsTaxable());
         response.setAllowBackorder(product.getAllowBackorder());

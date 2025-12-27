@@ -72,4 +72,7 @@ public class ProductRequest {
     // @NotEmpty removed to handle deactivation of products with no categories
     @Schema(description = ProductSwaggerMessages.PRODUCT_CATEGORY_IDS_DESCRIPTION, example = "[1, 2]")
     private List<Long> categoryIds;
+
+    @Schema(description = "List of product code values with prices (e.g., Color: Blue, Size: S)", example = "[{\"codeValueId\": 1, \"price\": 29.99}, {\"codeValueId\": 2, \"price\": 31.99}]")
+    private List<ProductCodeValueRequest> productCodeValues;
 }

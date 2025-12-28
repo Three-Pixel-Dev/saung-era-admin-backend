@@ -11,6 +11,8 @@ import org.threepixeldev.saungeraadmin.shared.data.model.User;
 import org.threepixeldev.saungeraadmin.shared.data.repository.jpa.UserJpaRepository;
 import org.threepixeldev.saungeraadmin.shared.mapper.UserMapper;
 
+import org.springframework.util.CollectionUtils;
+
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
@@ -47,7 +49,7 @@ public class ProductMapper {
         // -------------------------------------------------------------
 
         // Map categories via ProductCategory entity
-        if (product.getProductCategories() != null) {
+        if (!CollectionUtils.isEmpty(product.getProductCategories())) {
             response.setCategories(product.getProductCategories().stream()
                     .map(pc -> categoryMapper.toResponse(pc.getCategory()))
                     .collect(Collectors.toList()));
@@ -121,7 +123,7 @@ public class ProductMapper {
             response.setDeletedBy(userMapper.toUserResponse(deletedByUser));
         }
 
-        if (productCodeValues != null && !productCodeValues.isEmpty()) {
+        if (!CollectionUtils.isEmpty(productCodeValues)) {
             Integer totalStock = productCodeValues.stream()
                     .map(ProductCodeValue::getQuantity)
                     .reduce(0, Integer::sum);

@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.server.ResponseStatusException;
 import org.threepixeldev.saungeraadmin.features.product.dto.ProductCodeValueRequest;
+import org.threepixeldev.saungeraadmin.features.product.dto.ProductListResponse;
 import org.threepixeldev.saungeraadmin.features.product.dto.ProductRequest;
 import org.threepixeldev.saungeraadmin.features.product.dto.ProductResponse;
 import org.threepixeldev.saungeraadmin.features.product.mapper.ProductMapper;
@@ -28,7 +29,10 @@ import org.threepixeldev.saungeraadmin.shared.data.repository.jpa.ProductJpaRepo
 import org.threepixeldev.saungeraadmin.shared.dto.PagedResponse;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -198,13 +202,29 @@ public class ProductService {
 
     @Cacheable(value = CACHE_NAME, key = "{#keyword, #status, #categoryId, #pageable.pageNumber, #pageable.pageSize}", unless = "#result.content.isEmpty()")
     @Transactional(readOnly = true)
-    public PagedResponse<ProductResponse> getAllProducts(String keyword, String status, Long categoryId, Pageable pageable) {
+    public PagedResponse<ProductListResponse> getAllProducts(String keyword, String status, Long categoryId, Pageable pageable) {
         Page<Product> productPage = productRepository.searchProducts(keyword, status, categoryId, pageable);
-        List<ProductResponse> content = productPage.getContent().stream()
-                .map(productMapper::toResponse)
+        List<Product> products = productPage.getContent();
+        
+        Map<Long, List<ProductCodeValue>> productCodeValuesMap = Collections.emptyMap();
+        if (!products.isEmpty()) {
+            List<Long> productIds = products.stream()
+                    .map(Product::getId)
+                    .toList();
+            
+            List<ProductCodeValue> allProductCodeValues = productCodeValueRepository.findByProductIdIn(productIds);
+            productCodeValuesMap = allProductCodeValues.stream()
+                    .collect(Collectors.groupingBy(pcv -> pcv.getProduct().getId()));
+        }
+        
+        List<ProductListResponse> content = products.stream()
+                .map(product -> {
+                    List<ProductCodeValue> productCodeValues = productCodeValuesMap.getOrDefault(product.getId(), Collections.emptyList());
+                    return productMapper.toListResponse(product, productCodeValues);
+                })
                 .toList();
 
-        return PagedResponse.<ProductResponse>builder()
+        return PagedResponse.<ProductListResponse>builder()
                 .content(content)
                 .totalElements(productPage.getTotalElements())
                 .totalPages(productPage.getTotalPages())

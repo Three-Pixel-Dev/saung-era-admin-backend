@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.threepixeldev.saungeraadmin.features.product.constants.ProductSwaggerMessages;
+import org.threepixeldev.saungeraadmin.features.product.dto.ProductListResponse;
 import org.threepixeldev.saungeraadmin.features.product.dto.ProductRequest;
 import org.threepixeldev.saungeraadmin.features.product.dto.ProductResponse;
 import org.threepixeldev.saungeraadmin.features.product.service.ProductService;
@@ -40,7 +41,7 @@ public class ProductController {
             )
     })
     @GetMapping
-    public ResponseEntity<PagedResponse<ProductResponse>> getAllProducts(
+    public ResponseEntity<PagedResponse<ProductListResponse>> getAllProducts(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long categoryId,

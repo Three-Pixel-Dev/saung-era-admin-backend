@@ -3,13 +3,17 @@ package org.threepixeldev.saungeraadmin.features.product.mapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.threepixeldev.saungeraadmin.features.category.mapper.CategoryMapper;
+import org.threepixeldev.saungeraadmin.features.product.dto.ProductListResponse;
 import org.threepixeldev.saungeraadmin.features.product.dto.ProductResponse;
 import org.threepixeldev.saungeraadmin.shared.data.model.Product;
+import org.threepixeldev.saungeraadmin.shared.data.model.ProductCodeValue;
 import org.threepixeldev.saungeraadmin.shared.data.model.User;
 import org.threepixeldev.saungeraadmin.shared.data.repository.jpa.UserJpaRepository;
 import org.threepixeldev.saungeraadmin.shared.mapper.UserMapper;
 
+import java.math.BigDecimal;
 import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
@@ -66,6 +70,71 @@ public class ProductMapper {
         if (product.getDeletedBy() != null) {
             User deletedByUser = userRepository.findById(product.getDeletedBy()).orElse(null);
             response.setDeletedBy(userMapper.toUserResponse(deletedByUser));
+        }
+
+        return response;
+    }
+
+    public ProductListResponse toListResponse(Product product, List<ProductCodeValue> productCodeValues) {
+        if (product == null) {
+            return null;
+        }
+
+        ProductListResponse response = new ProductListResponse();
+        response.setId(product.getId());
+        response.setName(product.getName());
+        response.setDescription(product.getDescription());
+        response.setDiscountType(product.getDiscountType());
+        response.setDiscountAmount(product.getDiscountAmount());
+        response.setShortDescription(product.getShortDescription());
+        response.setLongDescription(product.getLongDescription());
+        response.setWeight(product.getWeight());
+        response.setCountryId(product.getCountryId());
+
+        response.setStatus(product.getStatus());
+        response.setIsTaxable(product.getIsTaxable());
+        response.setAllowBackorder(product.getAllowBackorder());
+        response.setTags(product.getTags());
+
+        if (product.getProductCategories() != null) {
+            response.setCategories(product.getProductCategories().stream()
+                    .map(pc -> categoryMapper.toResponse(pc.getCategory()))
+                    .collect(Collectors.toList()));
+        } else {
+            response.setCategories(Collections.emptyList());
+        }
+
+        response.setCreatedAt(product.getCreatedAt());
+        response.setUpdatedAt(product.getUpdatedAt());
+        response.setDeletedAt(product.getDeletedAt());
+
+        if (product.getCreatedBy() != null) {
+            User createdByUser = userRepository.findById(product.getCreatedBy()).orElse(null);
+            response.setCreatedBy(userMapper.toUserResponse(createdByUser));
+        }
+        if (product.getUpdatedBy() != null) {
+            User updatedByUser = userRepository.findById(product.getUpdatedBy()).orElse(null);
+            response.setUpdatedBy(userMapper.toUserResponse(updatedByUser));
+        }
+        if (product.getDeletedBy() != null) {
+            User deletedByUser = userRepository.findById(product.getDeletedBy()).orElse(null);
+            response.setDeletedBy(userMapper.toUserResponse(deletedByUser));
+        }
+
+        if (productCodeValues != null && !productCodeValues.isEmpty()) {
+            Integer totalStock = productCodeValues.stream()
+                    .map(ProductCodeValue::getQuantity)
+                    .reduce(0, Integer::sum);
+            response.setStock(totalStock);
+
+            BigDecimal minPrice = productCodeValues.stream()
+                    .map(ProductCodeValue::getPrice)
+                    .min(BigDecimal::compareTo)
+                    .orElse(null);
+            response.setPrice(minPrice);
+        } else {
+            response.setStock(0);
+            response.setPrice(null);
         }
 
         return response;

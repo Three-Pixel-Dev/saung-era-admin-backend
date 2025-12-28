@@ -62,7 +62,7 @@ public class ProductService {
 
         Product savedProduct = productRepository.save(product);
 
-        if (request.getCategoryIds() != null && !request.getCategoryIds().isEmpty()) {
+        if (!CollectionUtils.isEmpty(request.getCategoryIds())) {
             saveProductCategories(savedProduct, request.getCategoryIds(), createdBy);
         }
 
@@ -100,7 +100,7 @@ public class ProductService {
             entityManager.refresh(savedProduct);
         } else {
             List<ProductCodeValue> existingCodeValues = productCodeValueRepository.findByProductId(savedProduct.getId());
-            if (!existingCodeValues.isEmpty()) {
+            if (!CollectionUtils.isEmpty(existingCodeValues)) {
                 productCodeValueRepository.deleteByProductId(savedProduct.getId());
                 productCodeValueRepository.flush();
             }
@@ -207,7 +207,7 @@ public class ProductService {
         List<Product> products = productPage.getContent();
         
         Map<Long, List<ProductCodeValue>> productCodeValuesMap = Collections.emptyMap();
-        if (!products.isEmpty()) {
+        if (!CollectionUtils.isEmpty(products)) {
             List<Long> productIds = products.stream()
                     .map(Product::getId)
                     .toList();

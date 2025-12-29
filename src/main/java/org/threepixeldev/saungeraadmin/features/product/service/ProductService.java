@@ -70,7 +70,8 @@ public class ProductService {
             saveProductCodeValues(savedProduct, request.getProductCodeValues(), createdBy, false);
         }
 
-        return productMapper.toResponse(savedProduct);
+        List<ProductCodeValue> productCodeValues = productCodeValueRepository.findByProductId(savedProduct.getId());
+        return productMapper.toResponse(savedProduct, productCodeValues);
     }
 
     @CacheEvict(value = CACHE_NAME, allEntries = true)
@@ -106,7 +107,8 @@ public class ProductService {
             }
         }
 
-        return productMapper.toResponse(savedProduct);
+        List<ProductCodeValue> productCodeValues = productCodeValueRepository.findByProductId(savedProduct.getId());
+        return productMapper.toResponse(savedProduct, productCodeValues);
     }
 
     private void saveProductCategories(Product product, List<Long> categoryIds, Long userId) {
@@ -182,7 +184,9 @@ public class ProductService {
                 .orElseThrow(() -> new RuntimeException("Deleted product not found with id: " + id));
         product.restore();
         product.setUpdatedBy(restoredBy);
-        return productMapper.toResponse(productRepository.save(product));
+        Product savedProduct = productRepository.save(product);
+        List<ProductCodeValue> productCodeValues = productCodeValueRepository.findByProductId(savedProduct.getId());
+        return productMapper.toResponse(savedProduct, productCodeValues);
     }
 
     private void updateProductFields(Product product, ProductRequest request) {
@@ -206,7 +210,7 @@ public class ProductService {
         Page<Product> productPage = productRepository.searchProducts(keyword, status, categoryId, pageable);
         List<Product> products = productPage.getContent();
         
-        Map<Long, List<ProductCodeValue>> productCodeValuesMap = Collections.emptyMap();
+        Map<Long, List<ProductCodeValue>> productCodeValuesMap;
         if (!CollectionUtils.isEmpty(products)) {
             List<Long> productIds = products.stream()
                     .map(Product::getId)
@@ -215,8 +219,10 @@ public class ProductService {
             List<ProductCodeValue> allProductCodeValues = productCodeValueRepository.findByProductIdIn(productIds);
             productCodeValuesMap = allProductCodeValues.stream()
                     .collect(Collectors.groupingBy(pcv -> pcv.getProduct().getId()));
+        } else {
+            productCodeValuesMap = Collections.emptyMap();
         }
-        
+
         List<ProductListResponse> content = products.stream()
                 .map(product -> {
                     List<ProductCodeValue> productCodeValues = productCodeValuesMap.getOrDefault(product.getId(), Collections.emptyList());
@@ -239,6 +245,7 @@ public class ProductService {
         Product product = productRepository.findById(id)
                 .filter(p -> p.getDeletedAt() == null)
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
-        return productMapper.toResponse(product);
+        List<ProductCodeValue> productCodeValues = productCodeValueRepository.findByProductId(product.getId());
+        return productMapper.toResponse(product, productCodeValues);
     }
 }

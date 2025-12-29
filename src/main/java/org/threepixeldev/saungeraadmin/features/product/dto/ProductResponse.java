@@ -61,4 +61,7 @@ public class ProductResponse extends MasterData {
 
     @Schema(description = ProductSwaggerMessages.PRODUCT_TAGS_DESCRIPTION, example = "Modern,Interior")
     private String tags;
+
+    @Schema(description = "List of product code values (variants) for this product")
+    private List<ProductCodeValueResponse> productCodeValues;
 }

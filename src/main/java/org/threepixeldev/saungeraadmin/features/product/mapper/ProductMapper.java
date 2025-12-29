@@ -3,6 +3,7 @@ package org.threepixeldev.saungeraadmin.features.product.mapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.threepixeldev.saungeraadmin.features.category.mapper.CategoryMapper;
+import org.threepixeldev.saungeraadmin.features.product.dto.ProductCodeValueResponse;
 import org.threepixeldev.saungeraadmin.features.product.dto.ProductListResponse;
 import org.threepixeldev.saungeraadmin.features.product.dto.ProductResponse;
 import org.threepixeldev.saungeraadmin.shared.data.model.Product;
@@ -77,6 +78,33 @@ public class ProductMapper {
         return response;
     }
 
+    public ProductResponse toResponse(Product product, List<ProductCodeValue> productCodeValues) {
+        ProductResponse response = toResponse(product);
+        if (response != null && !CollectionUtils.isEmpty(productCodeValues)) {
+            response.setProductCodeValues(productCodeValues.stream()
+                    .map(this::toProductCodeValueResponse)
+                    .collect(Collectors.toList()));
+        } else if (response != null) {
+            response.setProductCodeValues(Collections.emptyList());
+        }
+        return response;
+    }
+
+    public ProductCodeValueResponse toProductCodeValueResponse(ProductCodeValue productCodeValue) {
+        if (productCodeValue == null) {
+            return null;
+        }
+
+        ProductCodeValueResponse response = new ProductCodeValueResponse();
+        response.setId(productCodeValue.getId());
+        response.setColorId(productCodeValue.getColorId());
+        response.setSizeId(productCodeValue.getSizeId());
+        response.setPrice(productCodeValue.getPrice());
+        response.setQuantity(productCodeValue.getQuantity());
+        response.setSku(productCodeValue.getSku());
+        return response;
+    }
+
     public ProductListResponse toListResponse(Product product, List<ProductCodeValue> productCodeValues) {
         if (product == null) {
             return null;
@@ -98,7 +126,7 @@ public class ProductMapper {
         response.setAllowBackorder(product.getAllowBackorder());
         response.setTags(product.getTags());
 
-        if (product.getProductCategories() != null) {
+        if (!CollectionUtils.isEmpty(product.getProductCategories())) {
             response.setCategories(product.getProductCategories().stream()
                     .map(pc -> categoryMapper.toResponse(pc.getCategory()))
                     .collect(Collectors.toList()));

@@ -29,6 +29,8 @@ import org.threepixeldev.saungeraadmin.shared.dto.PagedResponse;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -80,29 +82,88 @@ public class ProductService {
 
         Product savedProduct = productRepository.save(product);
 
+        // Update Categories
         if (request.getCategoryIds() != null) {
             productCategoryRepository.deleteByProductId(savedProduct.getId());
             productCategoryRepository.flush();
             saveProductCategories(savedProduct, request.getCategoryIds(), updatedBy);
-            entityManager.flush();
-            entityManager.refresh(savedProduct);
         }
 
-        if (!CollectionUtils.isEmpty(request.getProductCodeValues())) {
-            productCodeValueRepository.deleteByProductId(savedProduct.getId());
-            productCodeValueRepository.flush();
-            saveProductCodeValues(savedProduct, request.getProductCodeValues(), updatedBy, true);
-            entityManager.flush();
-            entityManager.refresh(savedProduct);
-        } else {
-            List<ProductCodeValue> existingCodeValues = productCodeValueRepository.findByProductId(savedProduct.getId());
-            if (!existingCodeValues.isEmpty()) {
-                productCodeValueRepository.deleteByProductId(savedProduct.getId());
-                productCodeValueRepository.flush();
+        // Smart Update for Product Code Values (Variants) to prevent duplicates and fix existing ones
+        if (request.getProductCodeValues() != null) {
+            handleProductCodeValuesUpdate(savedProduct, request.getProductCodeValues(), updatedBy);
+        }
+
+        entityManager.flush();
+        entityManager.refresh(savedProduct);
+
+        return productMapper.toResponse(savedProduct);
+    }
+
+    private void handleProductCodeValuesUpdate(Product product, List<ProductCodeValueRequest> requests, Long userId) {
+
+        List<ProductCodeValue> existingValues = productCodeValueRepository.findByProductId(product.getId());
+
+
+        List<ProductCodeValue> mutableExistingValues = new ArrayList<>(existingValues);
+        List<ProductCodeValue> toSave = new ArrayList<>();
+
+        for (ProductCodeValueRequest req : requests) {
+            if (req.getColorId() != null && !codeValueRepository.existsById(req.getColorId())) {
+                throw new RuntimeException("Color code value not found with id: " + req.getColorId());
+            }
+            if (req.getSizeId() != null && !codeValueRepository.existsById(req.getSizeId())) {
+                throw new RuntimeException("Size code value not found with id: " + req.getSizeId());
+            }
+
+            // Find matching existing value
+            ProductCodeValue matched = null;
+            for (ProductCodeValue ev : mutableExistingValues) {
+                if (ev.getColorId().equals(req.getColorId()) && ev.getSizeId().equals(req.getSizeId())) {
+                    matched = ev;
+                    break;
+                }
+            }
+
+            if (matched != null) {
+
+                matched.setPrice(req.getPrice());
+                matched.setQuantity(req.getQuantity());
+                matched.setUpdatedBy(userId);
+                toSave.add(matched);
+                mutableExistingValues.remove(matched);
+            } else {
+                ProductCodeValue newVal = new ProductCodeValue();
+                newVal.setProduct(product);
+                newVal.setColorId(req.getColorId());
+                newVal.setSizeId(req.getSizeId());
+                newVal.setPrice(req.getPrice());
+                newVal.setQuantity(req.getQuantity());
+                newVal.setCreatedBy(userId);
+                newVal.setUpdatedBy(userId);
+                toSave.add(newVal);
             }
         }
 
-        return productMapper.toResponse(savedProduct);
+        // 2. DELETE Remaining: Any items left in mutableExistingValues are either removed by user OR are duplicates
+        if (!mutableExistingValues.isEmpty()) {
+            productCodeValueRepository.deleteAll(mutableExistingValues);
+        }
+
+        // 3. Save updates and inserts
+        List<ProductCodeValue> savedValues = productCodeValueRepository.saveAll(toSave);
+
+        // 4. Generate SKU if missing
+        boolean skuUpdated = false;
+        for (ProductCodeValue pcv : savedValues) {
+            if (pcv.getSku() == null || pcv.getSku().isEmpty()) {
+                pcv.setSku("C" + pcv.getId());
+                skuUpdated = true;
+            }
+        }
+        if (skuUpdated) {
+            productCodeValueRepository.saveAll(savedValues);
+        }
     }
 
     private void saveProductCategories(Product product, List<Long> categoryIds, Long userId) {
@@ -119,17 +180,18 @@ public class ProductService {
         productCategoryRepository.saveAll(productCategories);
     }
 
+    // Keep this for Create method
     private void saveProductCodeValues(Product product, List<ProductCodeValueRequest> productCodeValueRequests, Long userId, boolean isUpdate) {
         List<ProductCodeValue> productCodeValues = new ArrayList<>();
         for (ProductCodeValueRequest request : productCodeValueRequests) {
             if (request.getColorId() != null && !codeValueRepository.existsById(request.getColorId())) {
                 throw new RuntimeException("Color code value not found with id: " + request.getColorId());
             }
-            
+
             if (request.getSizeId() != null && !codeValueRepository.existsById(request.getSizeId())) {
                 throw new RuntimeException("Size code value not found with id: " + request.getSizeId());
             }
-            
+
             ProductCodeValue pcv = new ProductCodeValue();
             pcv.setProduct(product);
             pcv.setColorId(request.getColorId());
@@ -141,15 +203,16 @@ public class ProductService {
             productCodeValues.add(pcv);
         }
         List<ProductCodeValue> savedProductCodeValues = productCodeValueRepository.saveAll(productCodeValues);
-        
+
         for (ProductCodeValue pcv : savedProductCodeValues) {
             pcv.setSku("C" + pcv.getId());
         }
         List<ProductCodeValue> finalSavedValues = productCodeValueRepository.saveAll(savedProductCodeValues);
-        
+
+        // Validation check for SKU
         for (ProductCodeValue pcv : finalSavedValues) {
             if (pcv.getSku() == null || pcv.getSku().isEmpty()) {
-                throw new RuntimeException("Failed to generate SKU for product code value with id: " + pcv.getId());
+                throw new RuntimeException("Failed to generate SKU");
             }
         }
     }
@@ -183,7 +246,6 @@ public class ProductService {
 
     private void updateProductFields(Product product, ProductRequest request) {
         product.setName(request.getName());
-        product.setDescription(request.getDescription());
         product.setDiscountType(request.getDiscountType());
         product.setDiscountAmount(request.getDiscountAmount());
         product.setShortDescription(request.getShortDescription());
@@ -191,7 +253,6 @@ public class ProductService {
         product.setWeight(request.getWeight());
         product.setCountryId(request.getCountryId() != null ? request.getCountryId() : 1L);
         product.setIsTaxable(request.getIsTaxable());
-        product.setAllowBackorder(request.getAllowBackorder());
         product.setStatus(request.getStatus());
         product.setTags(request.getTags());
     }

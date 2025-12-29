@@ -21,8 +21,7 @@ public class ProductRequest {
     @Schema(description = ProductSwaggerMessages.PRODUCT_NAME_DESCRIPTION, example = "Men's T-Shirt", maxLength = 255)
     private String name;
 
-    @Schema(description = ProductSwaggerMessages.PRODUCT_DESCRIPTION_DESCRIPTION, example = "Comfortable cotton t-shirt", maxLength = 1000)
-    private String description;
+    // REMOVED: description
 
     @Schema(description = ProductSwaggerMessages.PRODUCT_STATUS_DESCRIPTION, example = "Active")
     private String status;
@@ -33,8 +32,7 @@ public class ProductRequest {
     @Schema(description = ProductSwaggerMessages.PRODUCT_IS_TAXABLE_DESCRIPTION, example = "true")
     private Boolean isTaxable;
 
-    @Schema(description = ProductSwaggerMessages.PRODUCT_ALLOW_BACKORDER_DESCRIPTION, example = "false")
-    private Boolean allowBackorder;
+    // REMOVED: allowBackorder
 
     @Schema(description = ProductSwaggerMessages.PRODUCT_DISCOUNT_TYPE_DESCRIPTION, example = "PERCENTAGE")
     private String discountType;

@@ -3,6 +3,7 @@ package org.threepixeldev.saungeraadmin.features.product.mapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.threepixeldev.saungeraadmin.features.category.mapper.CategoryMapper;
+import org.threepixeldev.saungeraadmin.features.product.dto.ProductCodeValueRequest;
 import org.threepixeldev.saungeraadmin.features.product.dto.ProductResponse;
 import org.threepixeldev.saungeraadmin.shared.data.model.Product;
 import org.threepixeldev.saungeraadmin.shared.data.model.User;
@@ -40,7 +41,6 @@ public class ProductMapper {
         response.setIsTaxable(product.getIsTaxable());
         response.setAllowBackorder(product.getAllowBackorder());
         response.setTags(product.getTags());
-        // -------------------------------------------------------------
 
         // Map categories via ProductCategory entity
         if (product.getProductCategories() != null) {
@@ -49,6 +49,20 @@ public class ProductMapper {
                     .collect(Collectors.toList()));
         } else {
             response.setCategories(Collections.emptyList());
+        }
+        if (product.getProductCodeValues() != null) {
+            response.setProductCodeValues(product.getProductCodeValues().stream()
+                    .map(pcv -> {
+                        ProductCodeValueRequest dto = new ProductCodeValueRequest();
+                        dto.setColorId(pcv.getColorId());
+                        dto.setSizeId(pcv.getSizeId());
+                        dto.setPrice(pcv.getPrice());
+                        dto.setQuantity(pcv.getQuantity());
+                        return dto;
+                    })
+                    .collect(Collectors.toList()));
+        } else {
+            response.setProductCodeValues(Collections.emptyList());
         }
 
         response.setCreatedAt(product.getCreatedAt());

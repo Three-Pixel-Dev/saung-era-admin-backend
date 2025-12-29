@@ -65,4 +65,6 @@ public class Product extends MasterEntity {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Promotion> promotions;
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductCodeValue> productCodeValues;
 }

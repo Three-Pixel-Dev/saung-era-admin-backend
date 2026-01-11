@@ -51,7 +51,7 @@ public class ProductResponse extends MasterData {
     private List<CategoryResponse> categories;
 
     @Schema(description = "List of product variants (color, size, price, quantity)")
-    private List<ProductCodeValueRequest> productCodeValues;
+    private List<ProductCodeValueResponse> productCodeValues;
 
     @Schema(description = ProductSwaggerMessages.PRODUCT_STATUS_DESCRIPTION, example = "Active")
     private String status;

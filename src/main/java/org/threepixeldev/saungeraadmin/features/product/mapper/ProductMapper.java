@@ -3,7 +3,6 @@ package org.threepixeldev.saungeraadmin.features.product.mapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.threepixeldev.saungeraadmin.features.category.mapper.CategoryMapper;
-import org.threepixeldev.saungeraadmin.features.product.dto.ProductCodeValueRequest;
 import org.threepixeldev.saungeraadmin.features.product.dto.ProductCodeValueResponse;
 import org.threepixeldev.saungeraadmin.features.product.dto.ProductListResponse;
 import org.threepixeldev.saungeraadmin.features.product.dto.ProductResponse;
@@ -59,14 +58,7 @@ public class ProductMapper {
         }
         if (product.getProductCodeValues() != null) {
             response.setProductCodeValues(product.getProductCodeValues().stream()
-                    .map(pcv -> {
-                        ProductCodeValueRequest dto = new ProductCodeValueRequest();
-                        dto.setColorId(pcv.getColorId());
-                        dto.setSizeId(pcv.getSizeId());
-                        dto.setPrice(pcv.getPrice());
-                        dto.setQuantity(pcv.getQuantity());
-                        return dto;
-                    })
+                    .map(this::toProductCodeValueResponse)
                     .collect(Collectors.toList()));
         } else {
             response.setProductCodeValues(Collections.emptyList());

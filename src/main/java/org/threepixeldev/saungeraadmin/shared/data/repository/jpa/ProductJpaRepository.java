@@ -15,15 +15,22 @@ public interface ProductJpaRepository extends JpaRepository<Product, Long> {
         SELECT DISTINCT p FROM Product p
         LEFT JOIN p.productCategories pc
         WHERE p.deletedAt IS NULL
-          AND (
-               (:status IS NULL OR :status = '')
-            OR p.status = :status
-          )
           AND (:categoryId IS NULL OR pc.category.id = :categoryId)
           AND (
                :keyword IS NULL OR :keyword = ''
             OR LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
             OR LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%'))
+          )
+          AND (
+            (:status = 'Out of Stock' AND (SELECT COALESCE(SUM(v.quantity), 0) FROM ProductCodeValue v WHERE v.product = p) = 0)
+            OR
+            (:status = 'Low Stock' AND (SELECT COALESCE(SUM(v.quantity), 0) FROM ProductCodeValue v WHERE v.product = p) BETWEEN 1 AND 10)
+            OR
+            (
+                (:status IS NULL OR :status = '' OR (:status != 'Out of Stock' AND :status != 'Low Stock'))
+                AND 
+                (:status IS NULL OR :status = '' OR :status = 'ALL' OR p.status = :status)
+            )
           )
     """)
     Page<Product> searchProducts(

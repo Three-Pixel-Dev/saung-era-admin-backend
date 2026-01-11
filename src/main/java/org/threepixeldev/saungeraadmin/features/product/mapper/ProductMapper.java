@@ -47,7 +47,6 @@ public class ProductMapper {
         response.setIsTaxable(product.getIsTaxable());
         response.setAllowBackorder(product.getAllowBackorder());
         response.setTags(product.getTags());
-        // -------------------------------------------------------------
 
         // Map categories via ProductCategory entity
         if (!CollectionUtils.isEmpty(product.getProductCategories())) {
@@ -56,6 +55,13 @@ public class ProductMapper {
                     .collect(Collectors.toList()));
         } else {
             response.setCategories(Collections.emptyList());
+        }
+        if (product.getProductCodeValues() != null) {
+            response.setProductCodeValues(product.getProductCodeValues().stream()
+                    .map(this::toProductCodeValueResponse)
+                    .collect(Collectors.toList()));
+        } else {
+            response.setProductCodeValues(Collections.emptyList());
         }
 
         response.setCreatedAt(product.getCreatedAt());

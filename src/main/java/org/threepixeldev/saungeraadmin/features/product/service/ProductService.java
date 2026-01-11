@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.server.ResponseStatusException;
 import org.threepixeldev.saungeraadmin.features.product.dto.ProductCodeValueRequest;
+import org.threepixeldev.saungeraadmin.features.product.dto.ProductListResponse;
 import org.threepixeldev.saungeraadmin.features.product.dto.ProductRequest;
 import org.threepixeldev.saungeraadmin.features.product.dto.ProductResponse;
 import org.threepixeldev.saungeraadmin.features.product.mapper.ProductMapper;
@@ -28,6 +29,7 @@ import org.threepixeldev.saungeraadmin.shared.data.repository.jpa.ProductJpaRepo
 import org.threepixeldev.saungeraadmin.shared.dto.PagedResponse;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -60,7 +62,7 @@ public class ProductService {
 
         Product savedProduct = productRepository.save(product);
 
-        if (request.getCategoryIds() != null && !request.getCategoryIds().isEmpty()) {
+        if (!CollectionUtils.isEmpty(request.getCategoryIds())) {
             saveProductCategories(savedProduct, request.getCategoryIds(), createdBy);
         }
 
@@ -68,7 +70,8 @@ public class ProductService {
             saveProductCodeValues(savedProduct, request.getProductCodeValues(), createdBy, false);
         }
 
-        return productMapper.toResponse(savedProduct);
+        List<ProductCodeValue> productCodeValues = productCodeValueRepository.findByProductId(savedProduct.getId());
+        return productMapper.toResponse(savedProduct, productCodeValues);
     }
 
     @CacheEvict(value = CACHE_NAME, allEntries = true)
@@ -88,7 +91,6 @@ public class ProductService {
             productCategoryRepository.flush();
             saveProductCategories(savedProduct, request.getCategoryIds(), updatedBy);
         }
-
         // Smart Update for Product Code Values (Variants) to prevent duplicates and fix existing ones
         if (request.getProductCodeValues() != null) {
             handleProductCodeValuesUpdate(savedProduct, request.getProductCodeValues(), updatedBy);
@@ -241,7 +243,9 @@ public class ProductService {
                 .orElseThrow(() -> new RuntimeException("Deleted product not found with id: " + id));
         product.restore();
         product.setUpdatedBy(restoredBy);
-        return productMapper.toResponse(productRepository.save(product));
+        Product savedProduct = productRepository.save(product);
+        List<ProductCodeValue> productCodeValues = productCodeValueRepository.findByProductId(savedProduct.getId());
+        return productMapper.toResponse(savedProduct, productCodeValues);
     }
 
     private void updateProductFields(Product product, ProductRequest request) {
@@ -259,13 +263,31 @@ public class ProductService {
 
     @Cacheable(value = CACHE_NAME, key = "{#keyword, #status, #categoryId, #pageable.pageNumber, #pageable.pageSize}", unless = "#result.content.isEmpty()")
     @Transactional(readOnly = true)
-    public PagedResponse<ProductResponse> getAllProducts(String keyword, String status, Long categoryId, Pageable pageable) {
+    public PagedResponse<ProductListResponse> getAllProducts(String keyword, String status, Long categoryId, Pageable pageable) {
         Page<Product> productPage = productRepository.searchProducts(keyword, status, categoryId, pageable);
-        List<ProductResponse> content = productPage.getContent().stream()
-                .map(productMapper::toResponse)
+        List<Product> products = productPage.getContent();
+        
+        Map<Long, List<ProductCodeValue>> productCodeValuesMap;
+        if (!CollectionUtils.isEmpty(products)) {
+            List<Long> productIds = products.stream()
+                    .map(Product::getId)
+                    .toList();
+            
+            List<ProductCodeValue> allProductCodeValues = productCodeValueRepository.findByProductIdIn(productIds);
+            productCodeValuesMap = allProductCodeValues.stream()
+                    .collect(Collectors.groupingBy(pcv -> pcv.getProduct().getId()));
+        } else {
+            productCodeValuesMap = Collections.emptyMap();
+        }
+
+        List<ProductListResponse> content = products.stream()
+                .map(product -> {
+                    List<ProductCodeValue> productCodeValues = productCodeValuesMap.getOrDefault(product.getId(), Collections.emptyList());
+                    return productMapper.toListResponse(product, productCodeValues);
+                })
                 .toList();
 
-        return PagedResponse.<ProductResponse>builder()
+        return PagedResponse.<ProductListResponse>builder()
                 .content(content)
                 .totalElements(productPage.getTotalElements())
                 .totalPages(productPage.getTotalPages())
@@ -280,6 +302,7 @@ public class ProductService {
         Product product = productRepository.findById(id)
                 .filter(p -> p.getDeletedAt() == null)
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
-        return productMapper.toResponse(product);
+        List<ProductCodeValue> productCodeValues = productCodeValueRepository.findByProductId(product.getId());
+        return productMapper.toResponse(product, productCodeValues);
     }
 }

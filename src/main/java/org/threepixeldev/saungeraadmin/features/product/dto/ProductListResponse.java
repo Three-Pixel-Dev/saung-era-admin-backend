@@ -18,8 +18,8 @@ import java.util.List;
 @AllArgsConstructor
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
-@Schema(description = ProductSwaggerMessages.PRODUCT_RESPONSE_DESCRIPTION)
-public class ProductResponse extends MasterData {
+@Schema(description = "Product list response with additional stock and price information")
+public class ProductListResponse extends MasterData {
     @Schema(description = ProductSwaggerMessages.PRODUCT_ID_DESCRIPTION, example = "1")
     private Long id;
 
@@ -50,9 +50,6 @@ public class ProductResponse extends MasterData {
     @Schema(description = ProductSwaggerMessages.PRODUCT_CATEGORIES_DESCRIPTION)
     private List<CategoryResponse> categories;
 
-    @Schema(description = "List of product variants (color, size, price, quantity)")
-    private List<ProductCodeValueRequest> productCodeValues;
-
     @Schema(description = ProductSwaggerMessages.PRODUCT_STATUS_DESCRIPTION, example = "Active")
     private String status;
 
@@ -65,6 +62,9 @@ public class ProductResponse extends MasterData {
     @Schema(description = ProductSwaggerMessages.PRODUCT_TAGS_DESCRIPTION, example = "Modern,Interior")
     private String tags;
 
-    @Schema(description = "List of product code values (variants) for this product")
-    private List<ProductCodeValueResponse> productCodeValues;
+    @Schema(description = "Total stock quantity from all product code values", example = "500")
+    private Integer stock;
+
+    @Schema(description = "Minimum price from all product code values", example = "29.99")
+    private BigDecimal price;
 }
